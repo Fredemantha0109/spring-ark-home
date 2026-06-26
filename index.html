@@ -411,19 +411,25 @@ const CONFIG = {
   ARK_DASHBOARD_BASE: 'https://spring-ark-dashboard.surge.sh',
 };
 
+const HABIT_PROPERTY_CUTOVER_DATE = '2026-06-28';
+
 const PLAN_PROP = '【W】予定タスク';
 const ACTUAL_PROP = '【W】実績';
 
 const HABIT_CATEGORIES = [
   { key: 'mind',      label: 'MIND',      color: 'mind',
+    planProp: '【MIND】予定タスク',      doneProp: '【MIND】実績',
     taskNames: ['瞑想', 'ジャーナリング', 'Shakti'] },
   { key: 'physical',  label: 'PHYSICAL',  color: 'physical',
+    planProp: '【PHYSICAL】予定タスク',  doneProp: '【PHYSICAL】実績',
     taskNames: ['ジム', 'ウォーキング'] },
   { key: 'english',   label: 'ENGLISH',   color: 'english',
+    planProp: '【ENGLISH】予定タスク',   doneProp: '【ENGLISH】実績',
     taskNames: ['SB', 'OP', '語彙', 'リスニング', '瞬間英作文', '英会話',
                 '英会話振り返り', 'Reuse', 'Soccer', 'Youtube', '定着学習',
                 'Scrambled', 'シャドーイング', 'ライアン', '動画視聴'] },
   { key: 'knowledge', label: 'KNOWLEDGE', color: 'knowledge',
+    planProp: '【KNOWLEDGE】予定タスク', doneProp: '【KNOWLEDGE】実績',
     taskNames: ['NewsPicks'] },
 ];
 
@@ -455,6 +461,46 @@ function groupTasksByHabit(tasks) {
 function getTodayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function useNewHabitPropertiesByDate() {
+  return getTodayStr() >= HABIT_PROPERTY_CUTOVER_DATE;
+}
+
+function hasNewHabitPropertyStructure() {
+  if (!todayData) return false;
+  return HABIT_CATEGORIES.every(cat =>
+    todayData[cat.planProp]?.type === 'multi_select' &&
+    todayData[cat.doneProp]?.type === 'multi_select'
+  );
+}
+
+function usesNewHabitProperties() {
+  return useNewHabitPropertiesByDate() && hasNewHabitPropertyStructure();
+}
+
+function getCategoryByKey(habitKey) {
+  return HABIT_CATEGORIES.find(c => c.key === habitKey);
+}
+
+function getMultiSelectNames(propName) {
+  return (todayData[propName]?.multi_select || []).map(o => o.name);
+}
+
+function getPlannedForCategory(cat) {
+  if (usesNewHabitProperties()) {
+    return getMultiSelectNames(cat.planProp);
+  }
+  return getAllPlanned().filter(t => classifyHabitCategory(t) === cat.key);
+}
+
+function getDoneForCategory(cat) {
+  if (usesNewHabitProperties()) {
+    return getMultiSelectNames(cat.doneProp);
+  }
+  const planned = getPlannedForCategory(cat);
+  const allDone = getAllDone();
+  return planned.filter(t => allDone.includes(t));
 }
 
 function initDate() {
@@ -490,34 +536,48 @@ async function notionPatch(pageId, properties) {
 // ---- TASKS ----
 let notionOptions = {};
 
-async function loadNotionOptions() {
+async function loadNotionOptions(dbProperties) {
   try {
-    const res = await fetch(`${PROXY}/v1/databases/${CONFIG.DAILY_LOG_DB_ID}`, {
-      method: 'GET',
-      headers: { 'Notion-Version': '2022-06-28' },
-    });
-    const data = await res.json();
-    const allOptions = data.properties?.[PLAN_PROP]?.multi_select?.options?.map(o => o.name) || [];
+    const dbHasNewProps = HABIT_CATEGORIES.every(cat =>
+      dbProperties?.[cat.planProp]?.type === 'multi_select' &&
+      dbProperties?.[cat.doneProp]?.type === 'multi_select'
+    );
+    const useNew = useNewHabitPropertiesByDate() &&
+      (todayData ? hasNewHabitPropertyStructure() : dbHasNewProps);
     notionOptions = Object.fromEntries(
       [...HABIT_CATEGORIES, UNCLASSIFIED].map(c => [c.key, []])
     );
-    for (const opt of allOptions) {
-      notionOptions[classifyHabitCategory(opt)].push(opt);
+    if (useNew) {
+      for (const cat of HABIT_CATEGORIES) {
+        notionOptions[cat.key] =
+          dbProperties?.[cat.planProp]?.multi_select?.options?.map(o => o.name) || [];
+      }
+    } else {
+      const allOptions = dbProperties?.[PLAN_PROP]?.multi_select?.options?.map(o => o.name) || [];
+      for (const opt of allOptions) {
+        notionOptions[classifyHabitCategory(opt)].push(opt);
+      }
     }
   } catch(e) { console.error('Options load error:', e); }
 }
 
 async function loadTasks() {
   try {
-    await loadNotionOptions();
+    const dbRes = await fetch(`${PROXY}/v1/databases/${CONFIG.DAILY_LOG_DB_ID}`, {
+      method: 'GET',
+      headers: { 'Notion-Version': '2022-06-28' },
+    });
+    const dbData = await dbRes.json();
     const today = getTodayStr();
     const data = await notionQuery(CONFIG.DAILY_LOG_DB_ID, { property: 'Date', title: { equals: today } });
     if (!data.results.length) {
+      await loadNotionOptions(dbData.properties);
       document.getElementById('task-container').innerHTML = `<div class="task-empty">今日（${today}）のログが見つかりません</div>`;
       return;
     }
     todayPageId = data.results[0].id;
     todayData = data.results[0].properties;
+    await loadNotionOptions(dbData.properties);
     renderTasks();
   } catch(e) {
     document.getElementById('task-container').innerHTML = '<div class="task-empty">読み込みエラー</div>';
@@ -575,21 +635,39 @@ function renderCategoryBlock(cat, planned, done, allPlanned) {
 
 function renderTasks() {
   const container = document.getElementById('task-container');
-  const allPlanned = getAllPlanned();
-  const allDone = getAllDone();
-  const plannedGroups = groupTasksByHabit(allPlanned);
+  const usingNew = usesNewHabitProperties();
 
   let html = '';
-  for (const cat of HABIT_CATEGORIES) {
-    html += renderCategoryBlock(cat, plannedGroups[cat.key], allDone, allPlanned);
-  }
-  if (plannedGroups.unclassified.length > 0) {
-    html += renderCategoryBlock(UNCLASSIFIED, plannedGroups.unclassified, allDone, allPlanned);
+  if (usingNew) {
+    for (const cat of HABIT_CATEGORIES) {
+      const planned = getPlannedForCategory(cat);
+      const done = getDoneForCategory(cat);
+      html += renderCategoryBlock(cat, planned, done, planned);
+    }
+  } else {
+    const allPlanned = getAllPlanned();
+    const allDone = getAllDone();
+    const plannedGroups = groupTasksByHabit(allPlanned);
+    for (const cat of HABIT_CATEGORIES) {
+      html += renderCategoryBlock(cat, plannedGroups[cat.key], allDone, allPlanned);
+    }
+    if (plannedGroups.unclassified.length > 0) {
+      html += renderCategoryBlock(UNCLASSIFIED, plannedGroups.unclassified, allDone, allPlanned);
+    }
   }
   container.innerHTML = html;
 }
 
 async function toggleTask(habitKey, taskName) {
+  const cat = getCategoryByKey(habitKey);
+  if (usesNewHabitProperties() && cat) {
+    const done = getDoneForCategory(cat);
+    const newDone = done.includes(taskName) ? done.filter(t => t !== taskName) : [...done, taskName];
+    todayData[cat.doneProp] = { multi_select: newDone.map(n => ({ name: n })) };
+    renderTasks();
+    await notionPatch(todayPageId, { [cat.doneProp]: { multi_select: newDone.map(n => ({ name: n })) } });
+    return;
+  }
   const done = getAllDone();
   const newDone = done.includes(taskName) ? done.filter(t => t !== taskName) : [...done, taskName];
   todayData[ACTUAL_PROP] = { multi_select: newDone.map(n => ({ name: n })) };
@@ -602,6 +680,17 @@ async function addTask(habitKey) {
   if (!el) return;
   const text = el.value.trim();
   if (!text) return;
+  const cat = getCategoryByKey(habitKey);
+  if (usesNewHabitProperties() && cat) {
+    const current = getPlannedForCategory(cat);
+    if (current.includes(text)) { el.value = ''; return; }
+    const newPlanned = [...current, text];
+    todayData[cat.planProp] = { multi_select: newPlanned.map(n => ({ name: n })) };
+    el.value = '';
+    renderTasks();
+    await notionPatch(todayPageId, { [cat.planProp]: { multi_select: newPlanned.map(n => ({ name: n })) } });
+    return;
+  }
   const current = getAllPlanned();
   if (current.includes(text)) { el.value = ''; return; }
   const newPlanned = [...current, text];
@@ -616,6 +705,19 @@ async function addTaskFromInput(habitKey) {
 }
 
 async function deleteTask(habitKey, taskName) {
+  const cat = getCategoryByKey(habitKey);
+  if (usesNewHabitProperties() && cat) {
+    const newPlanned = getPlannedForCategory(cat).filter(t => t !== taskName);
+    const newDone = getDoneForCategory(cat).filter(t => t !== taskName);
+    todayData[cat.planProp] = { multi_select: newPlanned.map(n => ({ name: n })) };
+    todayData[cat.doneProp] = { multi_select: newDone.map(n => ({ name: n })) };
+    renderTasks();
+    await notionPatch(todayPageId, {
+      [cat.planProp]: { multi_select: newPlanned.map(n => ({ name: n })) },
+      [cat.doneProp]: { multi_select: newDone.map(n => ({ name: n })) },
+    });
+    return;
+  }
   const newPlanned = getAllPlanned().filter(t => t !== taskName);
   const newDone = getAllDone().filter(t => t !== taskName);
   todayData[PLAN_PROP] = { multi_select: newPlanned.map(n => ({ name: n })) };
