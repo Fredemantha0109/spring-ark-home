@@ -21,10 +21,11 @@
   --text-muted: #888899;
   --text-dim: #444455;
   --radius: 8px;
-  --w-color: #a8ff78;
-  --c-color: #78c8ff;
-  --ca-color: #ffb878;
-  --i-color: #d4a8ff;
+  --mind-color: #b78cff;
+  --physical-color: #a8ff78;
+  --english-color: #78c8ff;
+  --knowledge-color: #ffb878;
+  --unclassified-color: #666677;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -81,10 +82,11 @@ body::before {
 .task-category { margin-bottom: 18px; }
 .cat-header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; padding: 0 2px; }
 .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.cat-dot.w { background: var(--w-color); }
-.cat-dot.c { background: var(--c-color); }
-.cat-dot.ca { background: var(--ca-color); }
-.cat-dot.i { background: var(--i-color); }
+.cat-dot.mind { background: var(--mind-color); }
+.cat-dot.physical { background: var(--physical-color); }
+.cat-dot.english { background: var(--english-color); }
+.cat-dot.knowledge { background: var(--knowledge-color); }
+.cat-dot.unclassified { background: var(--unclassified-color); }
 .cat-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); letter-spacing: 0.1em; }
 
 .task-list { display: flex; flex-direction: column; gap: 3px; }
@@ -138,6 +140,8 @@ body::before {
 .task-add-btn:hover { border-color: var(--accent-dim); }
 
 .task-empty { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); padding: 3px 7px; }
+.task-category--unclassified { margin-top: 4px; opacity: 0.75; }
+.task-category--unclassified .cat-name { font-size: 10px; color: var(--text-dim); }
 .loading-inline { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 7px; padding: 5px 7px; }
 .spinner { width: 11px; height: 11px; border: 1.5px solid var(--border-bright); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -407,15 +411,46 @@ const CONFIG = {
   ARK_DASHBOARD_BASE: 'https://spring-ark-dashboard.surge.sh',
 };
 
-const CATEGORIES = [
-  { key: 'W',  label: 'ROUTINE',    color: 'w',  予定: '【W】予定タスク', 実績: '【W】実績' },
-  { key: 'C',  label: 'BELONGING',  color: 'c',  予定: '【C】予定タスク', 実績: '【C】実績' },
-  { key: 'Ca', label: 'CAREER',     color: 'ca', 予定: '【Ca】予定タスク', 実績: '【Ca】実績' },
-  { key: 'I',  label: 'AI',         color: 'i',  予定: '【I】予定タスク', 実績: '【I】実績' },
+const PLAN_PROP = '【W】予定タスク';
+const ACTUAL_PROP = '【W】実績';
+
+const HABIT_CATEGORIES = [
+  { key: 'mind',      label: 'MIND',      color: 'mind',
+    taskNames: ['瞑想', 'ジャーナリング', 'Shakti'] },
+  { key: 'physical',  label: 'PHYSICAL',  color: 'physical',
+    taskNames: ['ジム', 'ウォーキング'] },
+  { key: 'english',   label: 'ENGLISH',   color: 'english',
+    taskNames: ['SB', 'OP', '語彙', 'リスニング', '瞬間英作文', '英会話',
+                '英会話振り返り', 'Reuse', 'Soccer', 'Youtube', '定着学習',
+                'Scrambled', 'シャドーイング', 'ライアン', '動画視聴'] },
+  { key: 'knowledge', label: 'KNOWLEDGE', color: 'knowledge',
+    taskNames: ['NewsPicks'] },
 ];
+
+const UNCLASSIFIED = { key: 'unclassified', label: '未分類', color: 'unclassified' };
 
 let todayPageId = null;
 let todayData = null;
+
+function classifyHabitCategory(taskName) {
+  const base = taskName.replace(/^🔥/, '').trim();
+  for (const cat of HABIT_CATEGORIES) {
+    for (const keyword of cat.taskNames) {
+      if (base.includes(keyword)) return cat.key;
+    }
+  }
+  return UNCLASSIFIED.key;
+}
+
+function groupTasksByHabit(tasks) {
+  const groups = Object.fromEntries(
+    [...HABIT_CATEGORIES, UNCLASSIFIED].map(c => [c.key, []])
+  );
+  for (const t of tasks) {
+    groups[classifyHabitCategory(t)].push(t);
+  }
+  return groups;
+}
 
 function getTodayStr() {
   const d = new Date();
@@ -453,7 +488,7 @@ async function notionPatch(pageId, properties) {
 }
 
 // ---- TASKS ----
-let notionOptions = { W: [], C: [], Ca: [], I: [] }; // Notionの選択肢キャッシュ
+let notionOptions = {};
 
 async function loadNotionOptions() {
   try {
@@ -462,11 +497,12 @@ async function loadNotionOptions() {
       headers: { 'Notion-Version': '2022-06-28' },
     });
     const data = await res.json();
-    for (const cat of CATEGORIES) {
-      const prop = data.properties?.[cat.予定];
-      if (prop?.multi_select?.options) {
-        notionOptions[cat.key] = prop.multi_select.options.map(o => o.name);
-      }
+    const allOptions = data.properties?.[PLAN_PROP]?.multi_select?.options?.map(o => o.name) || [];
+    notionOptions = Object.fromEntries(
+      [...HABIT_CATEGORIES, UNCLASSIFIED].map(c => [c.key, []])
+    );
+    for (const opt of allOptions) {
+      notionOptions[classifyHabitCategory(opt)].push(opt);
     }
   } catch(e) { console.error('Options load error:', e); }
 }
@@ -488,99 +524,115 @@ async function loadTasks() {
   }
 }
 
-function getPlanned(cat) {
-  return (todayData[cat.予定]?.multi_select || []).map(o => o.name);
+function getAllPlanned() {
+  return (todayData[PLAN_PROP]?.multi_select || []).map(o => o.name);
 }
-function getDone(cat) {
-  return (todayData[cat.実績]?.multi_select || []).map(o => o.name);
+function getAllDone() {
+  return (todayData[ACTUAL_PROP]?.multi_select || []).map(o => o.name);
+}
+
+function renderCategoryBlock(cat, planned, done, allPlanned) {
+  const options = notionOptions[cat.key] || [];
+  const available = options.filter(o => !allPlanned.includes(o));
+  const isUnclassified = cat.key === UNCLASSIFIED.key;
+
+  const selectHtml = available.length > 0
+    ? `<select class="task-select" id="input-${cat.key}" onchange="if(this.value)addTask('${cat.key}')">
+        <option value="">追加...</option>
+        ${available.map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('')}
+      </select>`
+    : isUnclassified
+      ? ''
+      : `<input class="task-input" id="input-${cat.key}" placeholder="追加..." onkeydown="if(event.key==='Enter')addTaskFromInput('${cat.key}')"/>`;
+
+  const addRow = isUnclassified ? '' : `
+    <div class="task-add-row">
+      ${selectHtml}
+      <button class="task-add-btn" onclick="addTask('${cat.key}')">+</button>
+    </div>`;
+
+  return `
+    <div class="task-category${isUnclassified ? ' task-category--unclassified' : ''}">
+      <div class="cat-header">
+        <div class="cat-dot ${cat.color}"></div>
+        <div class="cat-name">${cat.label}</div>
+      </div>
+      <div class="task-list">
+        ${planned.length === 0 ? '<div class="task-empty">タスクなし</div>' :
+          planned.map(t => {
+            const isDone = done.includes(t);
+            return `<div class="task-item" onclick="toggleTask('${cat.key}','${escAttr(t)}')">
+              <div class="task-check ${isDone?'done':''}"></div>
+              <div class="task-text ${isDone?'done':''}">${escHtml(t)}</div>
+              <button class="task-delete" onclick="event.stopPropagation();deleteTask('${cat.key}','${escAttr(t)}')" title="削除">×</button>
+            </div>`;
+          }).join('')
+        }
+      </div>
+      ${addRow}
+    </div>`;
 }
 
 function renderTasks() {
   const container = document.getElementById('task-container');
+  const allPlanned = getAllPlanned();
+  const allDone = getAllDone();
+  const plannedGroups = groupTasksByHabit(allPlanned);
+
   let html = '';
-  for (const cat of CATEGORIES) {
-    const planned = getPlanned(cat);
-    const done = getDone(cat);
-    const options = notionOptions[cat.key] || [];
-    const available = options.filter(o => !planned.includes(o));
-
-    const selectHtml = available.length > 0
-      ? `<select class="task-select" id="input-${cat.key}" onchange="if(this.value)addTask('${cat.key}')">
-          <option value="">追加...</option>
-          ${available.map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('')}
-        </select>`
-      : `<input class="task-input" id="input-${cat.key}" placeholder="追加..." onkeydown="if(event.key==='Enter')addTaskFromInput('${cat.key}')"/>`;
-
-    html += `
-      <div class="task-category">
-        <div class="cat-header">
-          <div class="cat-dot ${cat.color}"></div>
-          <div class="cat-name">${cat.label}</div>
-        </div>
-        <div class="task-list">
-          ${planned.length === 0 ? '<div class="task-empty">タスクなし</div>' :
-            planned.map(t => {
-              const isDone = done.includes(t);
-              return `<div class="task-item" onclick="toggleTask('${cat.key}','${escHtml(t)}')">
-                <div class="task-check ${isDone?'done':''}"></div>
-                <div class="task-text ${isDone?'done':''}">${escHtml(t)}</div>
-                <button class="task-delete" onclick="event.stopPropagation();deleteTask('${cat.key}','${escHtml(t)}')" title="削除">×</button>
-              </div>`;
-            }).join('')
-          }
-        </div>
-        <div class="task-add-row">
-          ${selectHtml}
-          <button class="task-add-btn" onclick="addTask('${cat.key}')">+</button>
-        </div>
-      </div>`;
+  for (const cat of HABIT_CATEGORIES) {
+    html += renderCategoryBlock(cat, plannedGroups[cat.key], allDone, allPlanned);
+  }
+  if (plannedGroups.unclassified.length > 0) {
+    html += renderCategoryBlock(UNCLASSIFIED, plannedGroups.unclassified, allDone, allPlanned);
   }
   container.innerHTML = html;
 }
 
-async function toggleTask(catKey, taskName) {
-  const cat = CATEGORIES.find(c => c.key === catKey);
-  const done = getDone(cat);
-  const newDone = done.includes(taskName) ? done.filter(t=>t!==taskName) : [...done, taskName];
-  todayData[cat.実績] = { multi_select: newDone.map(n=>({name:n})) };
+async function toggleTask(habitKey, taskName) {
+  const done = getAllDone();
+  const newDone = done.includes(taskName) ? done.filter(t => t !== taskName) : [...done, taskName];
+  todayData[ACTUAL_PROP] = { multi_select: newDone.map(n => ({ name: n })) };
   renderTasks();
-  await notionPatch(todayPageId, { [cat.実績]: { multi_select: newDone.map(n=>({name:n})) } });
+  await notionPatch(todayPageId, { [ACTUAL_PROP]: { multi_select: newDone.map(n => ({ name: n })) } });
 }
 
-async function addTask(catKey) {
-  const cat = CATEGORIES.find(c => c.key === catKey);
-  const el = document.getElementById(`input-${catKey}`);
+async function addTask(habitKey) {
+  const el = document.getElementById(`input-${habitKey}`);
   if (!el) return;
   const text = el.value.trim();
   if (!text) return;
-  const current = getPlanned(cat);
-  if (current.includes(text)) { el.value=''; return; }
+  const current = getAllPlanned();
+  if (current.includes(text)) { el.value = ''; return; }
   const newPlanned = [...current, text];
-  todayData[cat.予定] = { multi_select: newPlanned.map(n=>({name:n})) };
+  todayData[PLAN_PROP] = { multi_select: newPlanned.map(n => ({ name: n })) };
   el.value = '';
   renderTasks();
-  await notionPatch(todayPageId, { [cat.予定]: { multi_select: newPlanned.map(n=>({name:n})) } });
+  await notionPatch(todayPageId, { [PLAN_PROP]: { multi_select: newPlanned.map(n => ({ name: n })) } });
 }
 
-async function addTaskFromInput(catKey) {
-  await addTask(catKey);
+async function addTaskFromInput(habitKey) {
+  await addTask(habitKey);
 }
 
-async function deleteTask(catKey, taskName) {
-  const cat = CATEGORIES.find(c => c.key === catKey);
-  const newPlanned = getPlanned(cat).filter(t=>t!==taskName);
-  const newDone = getDone(cat).filter(t=>t!==taskName);
-  todayData[cat.予定] = { multi_select: newPlanned.map(n=>({name:n})) };
-  todayData[cat.実績] = { multi_select: newDone.map(n=>({name:n})) };
+async function deleteTask(habitKey, taskName) {
+  const newPlanned = getAllPlanned().filter(t => t !== taskName);
+  const newDone = getAllDone().filter(t => t !== taskName);
+  todayData[PLAN_PROP] = { multi_select: newPlanned.map(n => ({ name: n })) };
+  todayData[ACTUAL_PROP] = { multi_select: newDone.map(n => ({ name: n })) };
   renderTasks();
   await notionPatch(todayPageId, {
-    [cat.予定]: { multi_select: newPlanned.map(n=>({name:n})) },
-    [cat.実績]: { multi_select: newDone.map(n=>({name:n})) },
+    [PLAN_PROP]: { multi_select: newPlanned.map(n => ({ name: n })) },
+    [ACTUAL_PROP]: { multi_select: newDone.map(n => ({ name: n })) },
   });
 }
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function escAttr(s) {
+  return escHtml(s).replace(/\\/g, '\\\\');
 }
 
 initDate();
