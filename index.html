@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SPRING ARK — Home</title>
+<title>SUMMER ARK — Home</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@400;500;600&display=swap');
 
@@ -159,7 +159,7 @@ body::before {
 .panel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .panel-dot.orange { background: var(--accent3); }
 .panel-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; }
-.panel-body { padding: 14px 16px; }
+.panel-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
 
 /* LINK GRIDS */
 .link-grid { display: grid; gap: 8px; }
@@ -182,16 +182,141 @@ body::before {
   font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent3); line-height: 1.7;
 }
 .token-notice code { background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+
+/* CREDO CARD */
+.credo-card {
+  background: var(--surface2);
+  border: 1px solid var(--border-bright);
+  border-radius: 7px;
+  padding: 18px 16px 14px;
+  user-select: text;
+}
+
+.credo-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.credo-statement {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 15px;
+  line-height: 2;
+  text-align: center;
+  color: var(--text);
+  font-weight: 400;
+  margin-bottom: 18px;
+}
+
+.credo-statement em {
+  font-style: normal;
+  color: var(--accent3);
+}
+
+.credo-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0 0 14px;
+}
+
+.credo-structure-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.credo-pyramid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credo-tier { display: grid; gap: 8px; }
+.credo-tier--core,
+.credo-tier--support { grid-template-columns: repeat(3, 1fr); }
+
+.credo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 5px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.credo-block-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+}
+
+.credo-block-desc {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.credo-block--base {
+  background: var(--surface);
+  border-color: var(--accent-dim);
+  padding: 12px 10px;
+}
+
+.credo-block--base .credo-block-name { color: var(--accent); font-size: 12px; }
+.credo-block--base .credo-block-desc { color: var(--text-muted); }
+
+.credo-block--core {
+  background: var(--surface);
+  border-color: var(--border-bright);
+}
+
+.credo-block--core .credo-block-name { color: var(--text); }
+
+.credo-block--support {
+  background: transparent;
+  border-color: var(--border);
+  padding: 8px 6px;
+}
+
+.credo-block--support .credo-block-name {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.credo-footer {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .credo-tier--core,
+  .credo-tier--support { grid-template-columns: 1fr; }
+  .credo-statement { font-size: 14px; line-height: 1.85; }
+}
 </style>
 </head>
 <body>
 <div class="shell">
 
   <header class="topbar">
-    <div class="logo">SPRING ARK</div>
+    <div class="logo">SUMMER ARK</div>
     <div class="topbar-date" id="topbar-date">—</div>
     <div class="topbar-right">
-      <div class="countdown">帰国まで <strong id="countdown-days">—</strong> days</div>
+      <div class="countdown">Summer Ark終了まで <strong id="countdown-days">—</strong> days</div>
       <a class="ark-btn" id="ark-dashboard-btn" href="#" target="_blank">↗ ARK Dashboard</a>
     </div>
   </header>
@@ -210,6 +335,47 @@ body::before {
     <div class="panel" style="animation-delay:0.05s">
       <div class="panel-header"><div class="panel-dot orange"></div><div class="panel-title">Projects</div></div>
       <div class="panel-body">
+        <div class="credo-card">
+          <div class="credo-label">MORNING ・ 5 MIN</div>
+          <p class="credo-statement">
+            今日もまた、自分と自分に関わる人が、<br>
+            成長を感じ、自信を持って笑顔になれている。<br>
+            <em>その輪が、関わる人を通じてさらに広がっていく。</em>
+          </p>
+          <hr class="credo-divider">
+          <div class="credo-structure-label">価値観の構造</div>
+          <div class="credo-pyramid">
+            <div class="credo-tier credo-tier--base">
+              <div class="credo-block credo-block--base">
+                <span class="credo-block-name">Vision Builder</span>
+                <span class="credo-block-desc">自らの幸福を他人任せにしない</span>
+              </div>
+            </div>
+            <div class="credo-tier credo-tier--core">
+              <div class="credo-block credo-block--core">
+                <span class="credo-block-name">Perfect Worker</span>
+              </div>
+              <div class="credo-block credo-block--core">
+                <span class="credo-block-name">Private Spark</span>
+              </div>
+              <div class="credo-block credo-block--core">
+                <span class="credo-block-name">Daddy Cool</span>
+              </div>
+            </div>
+            <div class="credo-tier credo-tier--support">
+              <div class="credo-block credo-block--support">
+                <span class="credo-block-name">English Hero</span>
+              </div>
+              <div class="credo-block credo-block--support">
+                <span class="credo-block-name">Future Tech Explorer</span>
+              </div>
+              <div class="credo-block credo-block--support">
+                <span class="credo-block-name">Forever Young</span>
+              </div>
+            </div>
+          </div>
+          <div class="credo-footer">2026.06 ・ 本帰国に伴う特別レビューより</div>
+        </div>
         <div class="link-grid project">
           <a class="link-card project" href="https://content-studio-drab-rho.vercel.app/" target="_blank">
             <span class="link-icon">✍️</span>
@@ -234,20 +400,18 @@ body::before {
   </main>
 </div>
 
-<script src="config.js"></script>
 <script>
 const CONFIG = {
-  NOTION_TOKEN: typeof NOTION_TOKEN !== 'undefined' ? NOTION_TOKEN : 'YOUR_NOTION_TOKEN_HERE',
   DAILY_LOG_DB_ID: '33fe165e5f8a806e97fddb0ce92734d9',
-  RETURN_DATE: '2026-07-07',
-  ARK_DASHBOARD_BASE: 'https://diagram-spring-ark-dashboard.surge.sh',
+  SEASON_END_DATE: '2026-09-30',
+  ARK_DASHBOARD_BASE: 'https://spring-ark-dashboard.surge.sh',
 };
 
 const CATEGORIES = [
-  { key: 'W',  label: 'WELLNESS',      color: 'w',  予定: '【W】予定タスク', 実績: '【W】実績' },
-  { key: 'C',  label: 'COMMUNICATION', color: 'c',  予定: '【C】予定タスク', 実績: '【C】実績' },
-  { key: 'Ca', label: 'CAREER',        color: 'ca', 予定: '【Ca】予定タスク', 実績: '【Ca】実績' },
-  { key: 'I',  label: 'INPUT',         color: 'i',  予定: '【I】予定タスク', 実績: '【I】実績' },
+  { key: 'W',  label: 'ROUTINE',    color: 'w',  予定: '【W】予定タスク', 実績: '【W】実績' },
+  { key: 'C',  label: 'BELONGING',  color: 'c',  予定: '【C】予定タスク', 実績: '【C】実績' },
+  { key: 'Ca', label: 'CAREER',     color: 'ca', 予定: '【Ca】予定タスク', 実績: '【Ca】実績' },
+  { key: 'I',  label: 'AI',         color: 'i',  予定: '【I】予定タスク', 実績: '【I】実績' },
 ];
 
 let todayPageId = null;
@@ -263,7 +427,7 @@ function initDate() {
   const days = ['日','月','火','水','木','金','土'];
   document.getElementById('topbar-date').textContent =
     `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
-  const diff = Math.ceil((new Date(CONFIG.RETURN_DATE) - now) / 86400000);
+  const diff = Math.ceil((new Date(CONFIG.SEASON_END_DATE) - now) / 86400000);
   document.getElementById('countdown-days').textContent = diff > 0 ? diff : 0;
   document.getElementById('ark-dashboard-btn').href = `${CONFIG.ARK_DASHBOARD_BASE}?date=${getTodayStr()}`;
 }
@@ -273,7 +437,7 @@ const PROXY = 'https://notion-proxy.y-furuya0109.workers.dev';
 async function notionQuery(dbId, filter) {
   const res = await fetch(`${PROXY}/v1/databases/${dbId}/query`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${CONFIG.NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+    headers: { 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
     body: JSON.stringify({ filter, page_size: 10 }),
   });
   return res.json();
@@ -282,7 +446,7 @@ async function notionQuery(dbId, filter) {
 async function notionPatch(pageId, properties) {
   const res = await fetch(`${PROXY}/v1/pages/${pageId}`, {
     method: 'PATCH',
-    headers: { 'Authorization': `Bearer ${CONFIG.NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+    headers: { 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
     body: JSON.stringify({ properties }),
   });
   return res.json();
@@ -295,7 +459,7 @@ async function loadNotionOptions() {
   try {
     const res = await fetch(`${PROXY}/v1/databases/${CONFIG.DAILY_LOG_DB_ID}`, {
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${CONFIG.NOTION_TOKEN}`, 'Notion-Version': '2022-06-28' },
+      headers: { 'Notion-Version': '2022-06-28' },
     });
     const data = await res.json();
     for (const cat of CATEGORIES) {
@@ -308,7 +472,6 @@ async function loadNotionOptions() {
 }
 
 async function loadTasks() {
-  if (CONFIG.NOTION_TOKEN === 'YOUR_NOTION_TOKEN_HERE') { renderTasksFallback(); return; }
   try {
     await loadNotionOptions();
     const today = getTodayStr();
@@ -414,11 +577,6 @@ async function deleteTask(catKey, taskName) {
     [cat.予定]: { multi_select: newPlanned.map(n=>({name:n})) },
     [cat.実績]: { multi_select: newDone.map(n=>({name:n})) },
   });
-}
-
-function renderTasksFallback() {
-  document.getElementById('task-container').innerHTML =
-    `<div class="token-notice">Notion Token未設定。<br><code>config.js</code> に <code>NOTION_TOKEN</code> を設定するとタスクが表示されます。</div>`;
 }
 
 function escHtml(s) {
