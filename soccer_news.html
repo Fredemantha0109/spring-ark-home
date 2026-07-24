@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soccer News — Spring Ark</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #0c0c0e;
+  --surface: #111114;
+  --surface2: #18181d;
+  --border: #222228;
+  --border-bright: #2e2e38;
+  --accent: #a8ff78;
+  --accent-dim: #4a7a38;
+  --accent2: #78c8ff;
+  --accent3: #ffb878;
+  --text: #dddde8;
+  --text-muted: #888899;
+  --text-dim: #444455;
+  --radius: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Shippori Mincho', serif; font-size: 15px; }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.4;
+}
+
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 22px; height: 46px;
+}
+.logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.2em; color: var(--accent); }
+.topbar-sub { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); }
+.back-btn {
+  margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted);
+  text-decoration: none; border: 1px solid var(--border-bright); padding: 5px 12px;
+  border-radius: 4px; letter-spacing: 0.08em; transition: all 0.15s;
+}
+.back-btn:hover { color: var(--accent2); border-color: var(--accent2); }
+
+.content { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 16px; }
+
+.updated-line { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); text-align: right; }
+
+.panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+.panel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.panel-dot.orange { background: var(--accent3); }
+.panel-dot.blue { background: var(--accent2); }
+.panel-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; }
+.panel-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.empty-note { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-dim); padding: 4px 2px; }
+
+/* MATCH RESULT SPOILER */
+.match-card {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px 14px;
+}
+.match-teaser {
+  display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+  user-select: none;
+}
+.match-teaser-text { font-size: 14px; color: var(--text); }
+.match-teaser-hint { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent2); letter-spacing: 0.05em; }
+.match-detail {
+  display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-bright);
+  font-size: 14px; line-height: 1.7;
+}
+.match-detail.show { display: block; }
+.match-detail .score { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--accent); }
+.match-detail .meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* STANDINGS */
+table.standings { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.standings th, table.standings td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+table.standings th { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
+table.standings td.num { font-family: 'DM Mono', monospace; text-align: center; }
+
+/* TRANSFER / GOAL ITEMS */
+.list-item {
+  padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px;
+  font-size: 13px; line-height: 1.5;
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">⚽ SOCCER NEWS</div>
+  <div class="topbar-sub" id="period-label">2026.07.22 11:30 〜 2026.07.23 11:30</div>
+  <a class="back-btn" href="index.html">← Home</a>
+</header>
+
+<main class="content">
+  <div class="updated-line" id="updated-line">最終更新: 2026-07-23 17:33 JST</div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="panel-dot"></div><div class="panel-title">試合結果（タップで結果表示）</div></div>
+    <div class="panel-body" id="results-body">
+      <div class="empty-note">対象期間中、対象チーム・大会（浦和レッズ、アトレティコ・マドリード、アーセナル、日本代表、イングランド代表、ACL、UEFAチャンピオンズリーグ対象クラブ）の試合はありませんでした。浦和レッズの次戦（J1第21節・湘南戦）は7月23日19:30キックオフのため対象期間後、アーセナルの初のプレシーズンマッチ（ACミラン戦）も7月23日20:30キックオフで対象期間後です。他の対象クラブも各国ともW杯明けのプレシーズン準備期間中で、ACLエリートの開幕も8月のため、対象期間中の試合はありません。</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="panel-dot orange"></div><div class="panel-title">順位表（節終了ごとに更新）</div></div>
+    <div class="panel-body" id="standings-body">
+      <div class="empty-note">対象期間中に節が終了したリーグはありませんでした。J1は次節（第21節）が7月23日夜以降のため未反映、プレミア・ブンデス・リーガ・セリエAはいずれもシーズンオフのため更新なし。</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="panel-dot blue"></div><div class="panel-title">移籍情報（確定分のみ）</div></div>
+    <div class="panel-body" id="transfers-body">
+      <div class="list-item">チェルシー：アストン・ヴィラよりFWモーガン・ロジャース（23歳・イングランド代表）を完全移籍で獲得と発表（2026.07.22）。移籍金は1億1700万ポンドでイギリス人選手として史上最高額、クラブ史上最高額補強となる。契約期間は2033年まで。</div>
+      <div class="list-item">水戸ホーリーホック：FW安藤瑞季（27歳）のFCジュロン（シンガポール）への完全移籍が決定したとクラブが発表（2026.07.22）。2025年限りで水戸を退団していた。</div>
+      <div class="list-item">横浜FC：MF高橋友矢（19歳）のCDセロリセンス（ポルトガル4部）への期限付き移籍をクラブが発表（2026.07.22）。</div>
+      <div class="list-item">FC今治：CDレガネス（スペイン）よりMF中井卓大（22歳・元レアル・マドリード下部組織）を完全移籍で獲得と発表（2026.07.22）。背番号80、初のJリーグ挑戦。</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="panel-dot"></div><div class="panel-title">日本人選手ゴール（英・独・西・伊）</div></div>
+    <div class="panel-body" id="goals-body">
+      <div class="empty-note">対象期間中は欧州各リーグともシーズンオフのため、対象ゴールはありませんでした。</div>
+    </div>
+  </div>
+</main>
+
+<script>
+function toggleMatch(el) {
+  const detail = el.parentElement.querySelector('.match-detail');
+  if (detail) detail.classList.toggle('show');
+}
+</script>
+</body>
+</html>
