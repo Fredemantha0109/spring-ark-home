@@ -24,7 +24,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Shippori Mincho', serif; font-size: 15px; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Shippori Mincho', serif; font-size: 15px; }
 
 body::before {
   content: '';
@@ -33,9 +33,17 @@ body::before {
   pointer-events: none; z-index: 9999; opacity: 0.4;
 }
 
+.shell {
+  display: grid;
+  grid-template-rows: 46px 1fr;
+  grid-template-columns: 220px 1fr;
+  height: 100vh;
+}
+
 .topbar {
+  grid-column: 1 / -1;
   background: var(--surface); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 20px; gap: 22px; height: 46px;
+  display: flex; align-items: center; padding: 0 20px; gap: 22px;
 }
 .logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.2em; color: var(--accent); }
 .topbar-sub { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); }
@@ -46,7 +54,31 @@ body::before {
 }
 .back-btn:hover { color: var(--accent2); border-color: var(--accent2); }
 
-.content { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 16px; }
+/* ARCHIVE SIDEBAR */
+.sidebar {
+  grid-row: 2; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sidebar-inner { flex: 1; overflow-y: auto; padding: 16px 12px; }
+.sidebar-inner::-webkit-scrollbar { width: 3px; }
+.sidebar-inner::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+.section-label {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+  color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; padding: 0 4px;
+}
+.archive-item {
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted);
+  padding: 8px 10px; border-radius: 5px; cursor: pointer; transition: all 0.12s;
+  letter-spacing: 0.02em; margin-bottom: 2px;
+}
+.archive-item:hover { background: var(--surface2); color: var(--text); }
+.archive-item.active { background: var(--surface2); color: var(--accent); border-left: 2px solid var(--accent); padding-left: 8px; }
+
+/* MAIN CONTENT */
+.content { grid-row: 2; overflow-y: auto; overflow-x: hidden; padding: 16px; }
+.content::-webkit-scrollbar { width: 3px; }
+.content::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+.content-inner { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
 
 .updated-line { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); text-align: right; }
 
@@ -96,53 +128,92 @@ table.standings td.num { font-family: 'DM Mono', monospace; text-align: center; 
 </style>
 </head>
 <body>
+<div class="shell">
 
-<header class="topbar">
-  <div class="logo">⚽ SOCCER NEWS</div>
-  <div class="topbar-sub" id="period-label">2026.07.22 11:30 〜 2026.07.23 11:30</div>
-  <a class="back-btn" href="index.html">← Home</a>
-</header>
+  <header class="topbar">
+    <div class="logo">⚽ SOCCER NEWS</div>
+    <div class="topbar-sub" id="period-label">—</div>
+    <a class="back-btn" href="index.html">← Home</a>
+  </header>
 
-<main class="content">
-  <div class="updated-line" id="updated-line">最終更新: 2026-07-23 17:33 JST</div>
-
-  <div class="panel">
-    <div class="panel-header"><div class="panel-dot"></div><div class="panel-title">試合結果（タップで結果表示）</div></div>
-    <div class="panel-body" id="results-body">
-      <div class="empty-note">対象期間中、対象チーム・大会（浦和レッズ、アトレティコ・マドリード、アーセナル、日本代表、イングランド代表、ACL、UEFAチャンピオンズリーグ対象クラブ）の試合はありませんでした。浦和レッズの次戦（J1第21節・湘南戦）は7月23日19:30キックオフのため対象期間後、アーセナルの初のプレシーズンマッチ（ACミラン戦）も7月23日20:30キックオフで対象期間後です。他の対象クラブも各国ともW杯明けのプレシーズン準備期間中で、ACLエリートの開幕も8月のため、対象期間中の試合はありません。</div>
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <div class="section-label">Archive</div>
+      <div id="archive-list"></div>
     </div>
-  </div>
+  </aside>
 
-  <div class="panel">
-    <div class="panel-header"><div class="panel-dot orange"></div><div class="panel-title">順位表（節終了ごとに更新）</div></div>
-    <div class="panel-body" id="standings-body">
-      <div class="empty-note">対象期間中に節が終了したリーグはありませんでした。J1は次節（第21節）が7月23日夜以降のため未反映、プレミア・ブンデス・リーガ・セリエAはいずれもシーズンオフのため更新なし。</div>
+  <main class="content">
+    <div class="content-inner">
+      <div class="updated-line" id="updated-line">最終更新: —</div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-dot"></div><div class="panel-title">試合結果（タップで結果表示）</div></div>
+        <div class="panel-body" id="results-body"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-dot orange"></div><div class="panel-title">順位表（節終了ごとに更新）</div></div>
+        <div class="panel-body" id="standings-body"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-dot blue"></div><div class="panel-title">移籍情報（確定分のみ）</div></div>
+        <div class="panel-body" id="transfers-body"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-dot"></div><div class="panel-title">日本人選手ゴール（英・独・西・伊）</div></div>
+        <div class="panel-body" id="goals-body"></div>
+      </div>
     </div>
-  </div>
+  </main>
 
-  <div class="panel">
-    <div class="panel-header"><div class="panel-dot blue"></div><div class="panel-title">移籍情報（確定分のみ）</div></div>
-    <div class="panel-body" id="transfers-body">
-      <div class="list-item">チェルシー：アストン・ヴィラよりFWモーガン・ロジャース（23歳・イングランド代表）を完全移籍で獲得と発表（2026.07.22）。移籍金は1億1700万ポンドでイギリス人選手として史上最高額、クラブ史上最高額補強となる。契約期間は2033年まで。</div>
-      <div class="list-item">水戸ホーリーホック：FW安藤瑞季（27歳）のFCジュロン（シンガポール）への完全移籍が決定したとクラブが発表（2026.07.22）。2025年限りで水戸を退団していた。</div>
-      <div class="list-item">横浜FC：MF高橋友矢（19歳）のCDセロリセンス（ポルトガル4部）への期限付き移籍をクラブが発表（2026.07.22）。</div>
-      <div class="list-item">FC今治：CDレガネス（スペイン）よりMF中井卓大（22歳・元レアル・マドリード下部組織）を完全移籍で獲得と発表（2026.07.22）。背番号80、初のJリーグ挑戦。</div>
-    </div>
-  </div>
+</div>
 
-  <div class="panel">
-    <div class="panel-header"><div class="panel-dot"></div><div class="panel-title">日本人選手ゴール（英・独・西・伊）</div></div>
-    <div class="panel-body" id="goals-body">
-      <div class="empty-note">対象期間中は欧州各リーグともシーズンオフのため、対象ゴールはありませんでした。</div>
-    </div>
-  </div>
-</main>
-
+<script type="application/json" id="archive-data">
+[
+  {
+    "date": "2026-07-23",
+    "label": "2026.07.23",
+    "period": "2026.07.22 11:30 〜 2026.07.23 11:30",
+    "updated": "2026-07-23 17:33 JST",
+    "resultsHtml": "<div class=\"empty-note\">対象期間中、対象チーム・大会（浦和レッズ、アトレティコ・マドリード、アーセナル、日本代表、イングランド代表、ACL、UEFAチャンピオンズリーグ対象クラブ）の試合はありませんでした。浦和レッズの次戦（J1第21節・湘南戦）は7月23日19:30キックオフのため対象期間後、アーセナルの初のプレシーズンマッチ（ACミラン戦）も7月23日20:30キックオフで対象期間後です。他の対象クラブも各国ともW杯明けのプレシーズン準備期間中で、ACLエリートの開幕も8月のため、対象期間中の試合はありません。</div>",
+    "standingsHtml": "<div class=\"empty-note\">対象期間中に節が終了したリーグはありませんでした。J1は次節（第21節）が7月23日夜以降のため未反映、プレミア・ブンデス・リーガ・セリエAはいずれもシーズンオフのため更新なし。</div>",
+    "transfersHtml": "<div class=\"list-item\">チェルシー：アストン・ヴィラよりFWモーガン・ロジャース（23歳・イングランド代表）を完全移籍で獲得と発表（2026.07.22）。移籍金は1億1700万ポンドでイギリス人選手として史上最高額、クラブ史上最高額補強となる。契約期間は2033年まで。</div><div class=\"list-item\">水戸ホーリーホック：FW安藤瑞季（27歳）のFCジュロン（シンガポール）への完全移籍が決定したとクラブが発表（2026.07.22）。2025年限りで水戸を退団していた。</div><div class=\"list-item\">横浜FC：MF高橋友矢（19歳）のCDセロリセンス（ポルトガル4部）への期限付き移籍をクラブが発表（2026.07.22）。</div><div class=\"list-item\">FC今治：CDレガネス（スペイン）よりMF中井卓大（22歳・元レアル・マドリード下部組織）を完全移籍で獲得と発表（2026.07.22）。背番号80、初のJリーグ挑戦。</div>",
+    "goalsHtml": "<div class=\"empty-note\">対象期間中は欧州各リーグともシーズンオフのため、対象ゴールはありませんでした。</div>"
+  }
+]
+</script>
 <script>
 function toggleMatch(el) {
   const detail = el.parentElement.querySelector('.match-detail');
   if (detail) detail.classList.toggle('show');
 }
+
+const DAYS = JSON.parse(document.getElementById('archive-data').textContent);
+let activeIndex = 0;
+
+function renderSidebar() {
+  const list = document.getElementById('archive-list');
+  list.innerHTML = DAYS.map((d, i) =>
+    `<div class="archive-item${i === activeIndex ? ' active' : ''}" onclick="showDay(${i})">${d.label}</div>`
+  ).join('');
+}
+
+function showDay(idx) {
+  activeIndex = idx;
+  const d = DAYS[idx];
+  document.getElementById('period-label').textContent = d.period;
+  document.getElementById('updated-line').textContent = '最終更新: ' + d.updated;
+  document.getElementById('results-body').innerHTML = d.resultsHtml;
+  document.getElementById('standings-body').innerHTML = d.standingsHtml;
+  document.getElementById('transfers-body').innerHTML = d.transfersHtml;
+  document.getElementById('goals-body').innerHTML = d.goalsHtml;
+  renderSidebar();
+}
+
+showDay(0);
 </script>
 </body>
 </html>
