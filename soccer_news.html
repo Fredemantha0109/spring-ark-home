@@ -24,7 +24,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Shippori Mincho', serif; font-size: 15px; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Shippori Mincho', serif; font-size: 19px; }
 
 body::before {
   content: '';
@@ -35,8 +35,8 @@ body::before {
 
 .shell {
   display: grid;
-  grid-template-rows: 46px 1fr;
-  grid-template-columns: 220px 1fr;
+  grid-template-rows: 52px 1fr;
+  grid-template-columns: 260px 1fr;
   height: 100vh;
 }
 
@@ -45,11 +45,11 @@ body::before {
   background: var(--surface); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; padding: 0 20px; gap: 22px;
 }
-.logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.2em; color: var(--accent); }
-.topbar-sub { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); }
+.logo { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; letter-spacing: 0.2em; color: var(--accent); }
+.topbar-sub { font-family: 'DM Mono', monospace; font-size: 15px; color: var(--text-muted); }
 .back-btn {
-  margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted);
-  text-decoration: none; border: 1px solid var(--border-bright); padding: 5px 12px;
+  margin-left: auto; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text-muted);
+  text-decoration: none; border: 1px solid var(--border-bright); padding: 6px 14px;
   border-radius: 4px; letter-spacing: 0.08em; transition: all 0.15s;
 }
 .back-btn:hover { color: var(--accent2); border-color: var(--accent2); }
@@ -63,16 +63,20 @@ body::before {
 .sidebar-inner::-webkit-scrollbar { width: 3px; }
 .sidebar-inner::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 .section-label {
-  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+  font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.2em;
   color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; padding: 0 4px;
 }
 .archive-item {
-  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted);
-  padding: 8px 10px; border-radius: 5px; cursor: pointer; transition: all 0.12s;
+  font-family: 'DM Mono', monospace; font-size: 15px; color: var(--text-muted);
+  padding: 9px 10px; border-radius: 5px; cursor: pointer; transition: all 0.12s;
   letter-spacing: 0.02em; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 8px;
 }
 .archive-item:hover { background: var(--surface2); color: var(--text); }
 .archive-item.active { background: var(--surface2); color: var(--accent); border-left: 2px solid var(--accent); padding-left: 8px; }
+.archive-unread-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent3); flex-shrink: 0;
+}
 
 /* MAIN CONTENT */
 .content { grid-row: 2; overflow-y: auto; overflow-x: hidden; padding: 16px; padding-bottom: 90px; }
@@ -80,7 +84,7 @@ body::before {
 .content::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 .content-inner { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
 
-.updated-line { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); text-align: right; }
+.updated-line { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-dim); text-align: right; }
 
 .panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -90,10 +94,10 @@ body::before {
 .panel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .panel-dot.orange { background: var(--accent3); }
 .panel-dot.blue { background: var(--accent2); }
-.panel-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; }
+.panel-title { font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; }
 .panel-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 
-.empty-note { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-dim); padding: 4px 2px; }
+.empty-note { font-family: 'DM Mono', monospace; font-size: 15px; color: var(--text-dim); padding: 4px 2px; }
 
 /* MATCH RESULT SPOILER */
 .match-card {
@@ -104,31 +108,31 @@ body::before {
   display: flex; align-items: center; justify-content: space-between; cursor: pointer;
   user-select: none;
 }
-.match-teaser-text { font-size: 14px; color: var(--text); }
-.match-teaser-hint { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent2); letter-spacing: 0.05em; }
+.match-teaser-text { font-size: 17px; color: var(--text); }
+.match-teaser-hint { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); letter-spacing: 0.05em; }
 .match-detail {
   display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-bright);
-  font-size: 14px; line-height: 1.7;
+  font-size: 17px; line-height: 1.7;
 }
 .match-detail.show { display: block; }
-.match-detail .score { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--accent); }
-.match-detail .meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.match-detail .score { font-family: 'DM Mono', monospace; font-size: 19px; color: var(--accent); }
+.match-detail .meta { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
 /* STANDINGS */
-table.standings { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.standings { width: 100%; border-collapse: collapse; font-size: 16px; }
 table.standings th, table.standings td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
-table.standings th { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
+table.standings th { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
 table.standings td.num { font-family: 'DM Mono', monospace; text-align: center; }
 
 /* TRANSFER / GOAL ITEMS */
 .list-item {
   padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px;
-  font-size: 13px; line-height: 1.5;
+  font-size: 16px; line-height: 1.5;
 }
 
 /* CHAT DOCK */
 .chat-dock {
-  position: fixed; left: 220px; right: 0; bottom: 0; z-index: 100;
+  position: fixed; left: 260px; right: 0; bottom: 0; z-index: 100;
   background: var(--surface); border-top: 1px solid var(--border-bright);
   display: flex; flex-direction: column;
   box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
@@ -141,25 +145,25 @@ table.standings td.num { font-family: 'DM Mono', monospace; text-align: center; 
 .chat-messages.show { display: flex; }
 .chat-messages::-webkit-scrollbar { width: 3px; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
-.chat-msg { max-width: 74%; font-size: 13px; line-height: 1.65; padding: 9px 12px; border-radius: 8px; white-space: pre-wrap; }
+.chat-msg { max-width: 74%; font-size: 16px; line-height: 1.65; padding: 9px 12px; border-radius: 8px; white-space: pre-wrap; }
 .chat-msg.user { align-self: flex-end; background: var(--accent-dim); color: #eafff0; border-bottom-right-radius: 2px; }
 .chat-msg.assistant { align-self: flex-start; background: var(--surface2); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
-.chat-msg.pending { color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 11px; }
+.chat-msg.pending { color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 13px; }
 .chat-sources { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
-.chat-sources a { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent2); text-decoration: none; word-break: break-all; }
+.chat-sources a { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); text-decoration: none; word-break: break-all; }
 .chat-sources a:hover { text-decoration: underline; }
 .chat-input-row { display: flex; align-items: center; gap: 10px; padding: 12px 18px; }
-.chat-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; flex-shrink: 0; }
+.chat-label { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; flex-shrink: 0; }
 .chat-input {
   flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
-  padding: 10px 16px; color: var(--text); font-size: 13px; font-family: 'Shippori Mincho', serif;
+  padding: 10px 16px; color: var(--text); font-size: 16px; font-family: 'Shippori Mincho', serif;
   outline: none; transition: border-color 0.15s;
 }
 .chat-input:focus { border-color: var(--accent-dim); }
 .chat-input::placeholder { color: var(--text-dim); }
 .chat-send-btn {
   background: var(--accent); color: var(--bg); border: none; border-radius: 20px;
-  padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.05em;
+  padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 14px; letter-spacing: 0.05em;
   cursor: pointer; flex-shrink: 0; transition: opacity 0.15s;
 }
 .chat-send-btn:disabled { opacity: 0.5; cursor: default; }
@@ -291,11 +295,30 @@ function toggleMatch(el) {
 const DAYS = JSON.parse(document.getElementById('archive-data').textContent);
 let activeIndex = 0;
 
+const READ_KEY = 'soccerNewsReadDates';
+function getReadDates() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(READ_KEY) || '[]'));
+  } catch (e) {
+    return new Set();
+  }
+}
+function markDateRead(date) {
+  const read = getReadDates();
+  if (!read.has(date)) {
+    read.add(date);
+    localStorage.setItem(READ_KEY, JSON.stringify([...read]));
+  }
+}
+
 function renderSidebar() {
   const list = document.getElementById('archive-list');
-  list.innerHTML = DAYS.map((d, i) =>
-    `<div class="archive-item${i === activeIndex ? ' active' : ''}" onclick="showDay(${i})">${d.label}</div>`
-  ).join('');
+  const readDates = getReadDates();
+  list.innerHTML = DAYS.map((d, i) => {
+    const isUnread = !readDates.has(d.date);
+    const dot = isUnread ? '<span class="archive-unread-dot" title="未読"></span>' : '';
+    return `<div class="archive-item${i === activeIndex ? ' active' : ''}" onclick="showDay(${i})">${dot}<span>${d.label}</span></div>`;
+  }).join('');
 }
 
 function showDay(idx) {
@@ -307,6 +330,7 @@ function showDay(idx) {
   document.getElementById('standings-body').innerHTML = d.standingsHtml;
   document.getElementById('transfers-body').innerHTML = d.transfersHtml;
   document.getElementById('goals-body').innerHTML = d.goalsHtml;
+  markDateRead(d.date);
   renderSidebar();
 }
 
