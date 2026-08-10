@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARK Training Log — シンガポール2年間の成長記録</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d2e;
+    --card2: #20243a;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8eaf0;
+    --muted: #7b7f9e;
+    --border: #2a2d45;
+    --push: #6c63ff;
+    --pull: #43e97b;
+    --legs: #f7971e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 24px; }
+  .grid-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+  .stat-delta { font-size: 0.78rem; margin-top: 6px; }
+  .delta-up { color: var(--accent3); }
+  .delta-down { color: var(--accent2); }
+
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .chart-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .chart-subtitle { font-size: 0.75rem; color: var(--muted); margin-bottom: 16px; }
+  canvas { max-height: 260px; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 700px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .tab.active { border-color: var(--accent); color: var(--accent); background: rgba(108,99,255,0.12); }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+
+  .ex-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .ex-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .ex-card:hover, .ex-card.selected { border-color: var(--accent); }
+  .ex-name { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+  .ex-meta { font-size: 0.72rem; color: var(--muted); display: flex; gap: 10px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-push { background: rgba(108,99,255,0.2); color: var(--push); }
+  .badge-pull { background: rgba(67,233,123,0.15); color: var(--pull); }
+  .badge-legs { background: rgba(247,151,30,0.2); color: var(--legs); }
+
+  .phase-gap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin: 8px 0;
+    background: rgba(255,101,132,0.08);
+    border: 1px dashed rgba(255,101,132,0.3);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    color: var(--accent2);
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 640px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .close-btn:hover { color: var(--text); }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<h1>🏋️ ARK Training Log</h1>
+<p class="subtitle">シンガポール 2024年9月 – 2026年6月 ｜ 全記録の成長可視化</p>
+
+<!-- Stats -->
+<div class="grid-stats" id="statsGrid"></div>
+
+<!-- Key Lifts -->
+<div class="section">
+  <div class="section-title">📈 主要種目の重量推移</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">💪 ベンチプレス</div>
+      <div class="chart-subtitle" id="benchMeta"></div>
+      <canvas id="benchChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🦵 スクワット</div>
+      <div class="chart-subtitle" id="squatMeta"></div>
+      <canvas id="squatChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🔝 ラットプルダウン</div>
+      <div class="chart-subtitle" id="latMeta"></div>
+      <canvas id="latChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏋️ 懸垂（補助→自重）</div>
+      <div class="chart-subtitle" id="chinMeta"></div>
+      <canvas id="chinChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- All Exercises -->
+<div class="section">
+  <div class="section-title">🗂 全種目を見る</div>
+  <div class="tabs" id="partTabs">
+    <div class="tab active" data-part="all">すべて</div>
+    <div class="tab" data-part="Push">Push</div>
+    <div class="tab" data-part="Pull">Pull</div>
+    <div class="tab" data-part="Legs">Legs</div>
+  </div>
+  <div class="ex-grid" id="exGrid"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="chart-title" id="modalTitle"></div>
+        <div class="chart-subtitle" id="modalMeta"></div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <canvas id="modalChart" style="max-height: 300px;"></canvas>
+  </div>
+</div>
+
+<footer>Generated from ARK Training Log ｜ Singapore 2024–2026</footer>
+
+<script>
+const DATA = {"ダンベルプレス":{"part":"Push","is_pair":false,"data":[{"date":"2024-09-16","weight":16.0,"reps":15,"sets":3},{"date":"2024-09-27","weight":14.0,"reps":12,"sets":3},{"date":"2024-10-11","weight":14.0,"reps":12,"sets":3},{"date":"2024-10-17","weight":14.0,"reps":12,"sets":3},{"date":"2024-10-24","weight":14.0,"reps":15,"sets":3},{"date":"2024-10-30","weight":16.0,"reps":12,"sets":3},{"date":"2024-11-06","weight":16.0,"reps":12,"sets":3},{"date":"2024-11-15","weight":16.0,"reps":12,"sets":3}]},"ブルガリアンスクワット":{"part":"Legs","is_pair":true,"data":[{"date":"2024-09-18","weight":8.0,"reps":15,"sets":4},{"date":"2024-10-02","weight":8.0,"reps":12,"sets":4},{"date":"2024-10-14","weight":8.0,"reps":12,"sets":4},{"date":"2024-10-22","weight":8.0,"reps":12,"sets":4},{"date":"2024-10-28","weight":8.0,"reps":12,"sets":4},{"date":"2024-11-04","weight":8.0,"reps":12,"sets":4},{"date":"2024-11-12","weight":8.0,"reps":12,"sets":4},{"date":"2026-01-07","weight":12.5,"reps":12,"sets":6},{"date":"2026-01-12","weight":12.5,"reps":12,"sets":3},{"date":"2026-01-21","weight":12.5,"reps":12,"sets":3},{"date":"2026-01-26","weight":12.5,"reps":12,"sets":3},{"date":"2026-02-02","weight":15.0,"reps":12,"sets":3},{"date":"2026-02-09","weight":15.0,"reps":12,"sets":3},{"date":"2026-02-16","weight":15.0,"reps":12,"sets":3},{"date":"2026-02-23","weight":15.0,"reps":12,"sets":3},{"date":"2026-03-02","weight":15.0,"reps":12,"sets":3},{"date":"2026-04-27","weight":15.0,"reps":12,"sets":3},{"date":"2026-05-04","weight":15.0,"reps":12,"sets":3},{"date":"2026-05-11","weight":15.0,"reps":12,"sets":3},{"date":"2026-05-20","weight":15.0,"reps":12,"sets":3},{"date":"2026-05-25","weight":15.0,"reps":12,"sets":3},{"date":"2026-06-01","weight":15.0,"reps":12,"sets":3},{"date":"2026-06-08","weight":17.5,"reps":12,"sets":3},{"date":"2026-06-17","weight":17.5,"reps":12,"sets":3},{"date":"2026-06-22","weight":17.5,"reps":12,"sets":3}]},"ケーブルプレスダウン":{"part":"Push","is_pair":false,"data":[{"date":"2024-09-19","weight":12.5,"reps":20,"sets":4},{"date":"2024-10-03","weight":12.5,"reps":12,"sets":4},{"date":"2024-10-16","weight":12.5,"reps":15,"sets":4},{"date":"2024-10-23","weight":15.0,"reps":15,"sets":4},{"date":"2024-10-29","weight":15.0,"reps":15,"sets":4},{"date":"2024-11-05","weight":17.5,"reps":15,"sets":4},{"date":"2024-11-12","weight":17.5,"reps":15,"sets":4}]},"インクラインダンベルカール":{"part":"Pull","is_pair":false,"data":[{"date":"2024-09-19","weight":6.0,"reps":12,"sets":4},{"date":"2024-10-03","weight":12.0,"reps":12,"sets":4},{"date":"2024-10-16","weight":8.0,"reps":12,"sets":4},{"date":"2024-10-23","weight":8.0,"reps":12,"sets":4},{"date":"2024-10-29","weight":8.0,"reps":12,"sets":4},{"date":"2024-11-05","weight":8.0,"reps":12,"sets":4},{"date":"2024-11-12","weight":8.0,"reps":12,"sets":4}]},"ケーブルカール":{"part":"Pull","is_pair":false,"data":[{"date":"2024-09-19","weight":12.5,"reps":20,"sets":4},{"date":"2024-10-03","weight":12.5,"reps":12,"sets":4},{"date":"2024-10-16","weight":12.5,"reps":15,"sets":4},{"date":"2024-10-23","weight":15.0,"reps":15,"sets":4},{"date":"2024-10-29","weight":15.0,"reps":15,"sets":4},{"date":"2024-11-05","weight":17.5,"reps":15,"sets":4},{"date":"2024-11-12","weight":17.5,"reps":15,"sets":4}]},"ダンベルフレンチプレス":{"part":"Push","is_pair":false,"data":[{"date":"2024-09-19","weight":10.0,"reps":12,"sets":4},{"date":"2024-10-03","weight":10.0,"reps":12,"sets":4},{"date":"2024-10-16","weight":10.0,"reps":15,"sets":4},{"date":"2024-10-23","weight":12.0,"reps":15,"sets":4},{"date":"2024-10-29","weight":12.0,"reps":15,"sets":4},{"date":"2024-11-05","weight":14.0,"reps":15,"sets":4},{"date":"2024-11-12","weight":14.0,"reps":15,"sets":4}]},"ダンベルワンハンドローイング":{"part":"Pull","is_pair":false,"data":[{"date":"2024-09-20","weight":10.0,"reps":15,"sets":3},{"date":"2024-10-03","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-16","weight":10.0,"reps":15,"sets":3},{"date":"2024-10-23","weight":12.0,"reps":15,"sets":3},{"date":"2024-10-29","weight":12.0,"reps":15,"sets":3},{"date":"2024-11-06","weight":14.0,"reps":15,"sets":3},{"date":"2024-11-12","weight":14.0,"reps":15,"sets":3}]},"ダンベルベントオーバーロウ":{"part":"Pull","is_pair":false,"data":[{"date":"2024-09-20","weight":6.0,"reps":15,"sets":3},{"date":"2024-10-03","weight":6.0,"reps":12,"sets":3},{"date":"2024-10-16","weight":6.0,"reps":15,"sets":3},{"date":"2024-10-23","weight":8.0,"reps":15,"sets":3},{"date":"2024-10-29","weight":10.0,"reps":12,"sets":3},{"date":"2024-11-06","weight":10.0,"reps":12,"sets":3},{"date":"2024-11-12","weight":10.0,"reps":12,"sets":3}]},"ケーブルプルオーバー":{"part":"Pull","is_pair":false,"data":[{"date":"2024-09-20","weight":12.5,"reps":15,"sets":3},{"date":"2024-10-03","weight":12.5,"reps":12,"sets":3},{"date":"2024-10-16","weight":12.5,"reps":15,"sets":3},{"date":"2024-10-23","weight":15.0,"reps":15,"sets":3},{"date":"2024-10-29","weight":17.5,"reps":15,"sets":3},{"date":"2024-11-06","weight":17.5,"reps":15,"sets":3},{"date":"2024-11-15","weight":17.5,"reps":15,"sets":3}]},"ケーブルクロスオーバー":{"part":"Push","is_pair":false,"data":[{"date":"2024-09-27","weight":5.0,"reps":10,"sets":3},{"date":"2024-10-11","weight":5.0,"reps":12,"sets":3},{"date":"2024-10-17","weight":5.0,"reps":12,"sets":3},{"date":"2024-10-24","weight":7.5,"reps":12,"sets":3},{"date":"2024-10-30","weight":7.5,"reps":12,"sets":3},{"date":"2024-11-06","weight":7.5,"reps":12,"sets":3},{"date":"2024-11-15","weight":7.5,"reps":12,"sets":3}]},"ダンベルフライ":{"part":"Push","is_pair":false,"data":[{"date":"2024-09-27","weight":10.0,"reps":10,"sets":3},{"date":"2024-10-11","weight":10.0,"reps":10,"sets":3},{"date":"2024-10-17","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-24","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-30","weight":10.0,"reps":12,"sets":3},{"date":"2024-11-06","weight":10.0,"reps":12,"sets":3}]},"ダンベルショルダープレス":{"part":"Push","is_pair":false,"data":[{"date":"2024-10-01","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-15","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-21","weight":10.0,"reps":15,"sets":3},{"date":"2024-10-25","weight":10.0,"reps":15,"sets":3},{"date":"2024-11-01","weight":10.0,"reps":15,"sets":3},{"date":"2024-11-07","weight":12.0,"reps":15,"sets":3}]},"ダンベルサイドレイズ":{"part":"Push","is_pair":false,"data":[{"date":"2024-10-01","weight":8.0,"reps":15,"sets":3},{"date":"2024-10-21","weight":8.0,"reps":15,"sets":3},{"date":"2024-11-01","weight":8.0,"reps":15,"sets":3}]},"ケーブルサイドレイズ":{"part":"Push","is_pair":false,"data":[{"date":"2024-10-01","weight":2.5,"reps":12,"sets":3},{"date":"2024-10-15","weight":2.5,"reps":12,"sets":3},{"date":"2024-10-25","weight":2.5,"reps":15,"sets":3},{"date":"2024-11-07","weight":2.5,"reps":15,"sets":3}]},"ケーブルリアレイズ":{"part":"Pull","is_pair":false,"data":[{"date":"2024-10-01","weight":2.5,"reps":12,"sets":3},{"date":"2024-10-15","weight":2.5,"reps":12,"sets":3},{"date":"2024-10-21","weight":2.5,"reps":15,"sets":3},{"date":"2024-10-25","weight":5.0,"reps":12,"sets":3},{"date":"2024-11-01","weight":5.0,"reps":12,"sets":3},{"date":"2024-11-07","weight":5.0,"reps":12,"sets":3}]},"ダンベルワイドスクワット":{"part":"Legs","is_pair":false,"data":[{"date":"2024-10-02","weight":18.0,"reps":12,"sets":4},{"date":"2024-10-22","weight":18.0,"reps":15,"sets":4},{"date":"2024-11-04","weight":20.0,"reps":15,"sets":4}]},"ダンベルスプリットスクワット":{"part":"Legs","is_pair":false,"data":[{"date":"2024-10-02","weight":12.0,"reps":12,"sets":3}]},"ダンベルカーフレイズ":{"part":"Legs","is_pair":false,"data":[{"date":"2024-10-02","weight":12.0,"reps":15,"sets":3},{"date":"2024-10-14","weight":12.0,"reps":20,"sets":3},{"date":"2024-10-22","weight":14.0,"reps":20,"sets":3},{"date":"2024-10-28","weight":16.0,"reps":20,"sets":3},{"date":"2024-11-04","weight":16.0,"reps":20,"sets":3},{"date":"2024-11-11","weight":16.0,"reps":20,"sets":3}]},"ダンベルRDL":{"part":"Pull","is_pair":true,"data":[{"date":"2024-10-03","weight":14.0,"reps":12,"sets":3},{"date":"2024-10-16","weight":14.0,"reps":15,"sets":3},{"date":"2024-10-23","weight":14.0,"reps":15,"sets":3},{"date":"2024-10-29","weight":16.0,"reps":15,"sets":3},{"date":"2024-11-06","weight":16.0,"reps":15,"sets":3},{"date":"2024-11-15","weight":16.0,"reps":15,"sets":3},{"date":"2026-01-21","weight":20.0,"reps":8,"sets":3},{"date":"2026-01-26","weight":22.5,"reps":8,"sets":3},{"date":"2026-02-02","weight":22.5,"reps":8,"sets":3},{"date":"2026-02-09","weight":22.5,"reps":8,"sets":3},{"date":"2026-02-16","weight":22.5,"reps":9,"sets":3},{"date":"2026-02-23","weight":22.5,"reps":10,"sets":3},{"date":"2026-03-02","weight":25.0,"reps":8,"sets":3},{"date":"2026-04-27","weight":25.0,"reps":8,"sets":3},{"date":"2026-05-04","weight":25.0,"reps":8,"sets":3},{"date":"2026-05-11","weight":25.0,"reps":8,"sets":3},{"date":"2026-05-20","weight":27.5,"reps":8,"sets":3},{"date":"2026-05-25","weight":27.5,"reps":8,"sets":3},{"date":"2026-06-01","weight":27.5,"reps":8,"sets":3},{"date":"2026-06-08","weight":30.0,"reps":8,"sets":3},{"date":"2026-06-17","weight":30.0,"reps":8,"sets":3},{"date":"2026-06-22","weight":30.0,"reps":8,"sets":3}]},"ダンベルフロントランジ":{"part":"Legs","is_pair":false,"data":[{"date":"2024-10-14","weight":12.0,"reps":12,"sets":3},{"date":"2024-10-22","weight":12.0,"reps":12,"sets":3},{"date":"2024-10-28","weight":12.0,"reps":12,"sets":3},{"date":"2024-11-04","weight":12.0,"reps":12,"sets":3},{"date":"2024-11-11","weight":12.0,"reps":12,"sets":3}]},"ダンベルスクワット":{"part":"Legs","is_pair":false,"data":[{"date":"2024-10-14","weight":18.0,"reps":12,"sets":4},{"date":"2024-10-28","weight":20.0,"reps":15,"sets":4},{"date":"2024-11-11","weight":20.0,"reps":15,"sets":4}]},"ダンベルリアレイズ":{"part":"Pull","is_pair":false,"data":[{"date":"2024-10-15","weight":6.0,"reps":12,"sets":3},{"date":"2024-10-21","weight":6.0,"reps":12,"sets":3},{"date":"2024-10-25","weight":6.0,"reps":15,"sets":3},{"date":"2024-11-01","weight":6.0,"reps":15,"sets":3},{"date":"2024-11-07","weight":8.0,"reps":15,"sets":3}]},"スクワット":{"part":"Legs","is_pair":false,"data":[{"date":"2026-01-07","weight":70.0,"reps":8,"sets":8},{"date":"2026-01-12","weight":65.0,"reps":5,"sets":3},{"date":"2026-01-21","weight":67.5,"reps":5,"sets":3},{"date":"2026-01-26","weight":70.0,"reps":5,"sets":3},{"date":"2026-02-02","weight":75.0,"reps":5,"sets":3},{"date":"2026-02-09","weight":77.5,"reps":5,"sets":3},{"date":"2026-02-16","weight":80.0,"reps":5,"sets":3},{"date":"2026-02-23","weight":82.5,"reps":5,"sets":3},{"date":"2026-03-02","weight":82.5,"reps":5,"sets":3},{"date":"2026-03-16","weight":82.5,"reps":5,"sets":3},{"date":"2026-04-06","weight":90.0,"reps":5,"sets":3},{"date":"2026-04-13","weight":90.0,"reps":5,"sets":3},{"date":"2026-04-20","weight":90.0,"reps":5,"sets":3},{"date":"2026-04-27","weight":95.0,"reps":5,"sets":3},{"date":"2026-05-04","weight":92.5,"reps":5,"sets":3},{"date":"2026-05-11","weight":95.0,"reps":5,"sets":3},{"date":"2026-05-20","weight":97.5,"reps":5,"sets":3},{"date":"2026-05-25","weight":100.0,"reps":5,"sets":3},{"date":"2026-06-01","weight":102.5,"reps":5,"sets":3},{"date":"2026-06-08","weight":105.0,"reps":5,"sets":3},{"date":"2026-06-17","weight":105.0,"reps":5,"sets":3},{"date":"2026-06-22","weight":105.0,"reps":5,"sets":3}]},"バーベルカール":{"part":"Pull","is_pair":false,"data":[{"date":"2026-01-09","weight":20.0,"reps":8,"sets":3},{"date":"2026-01-16","weight":27.5,"reps":8,"sets":3},{"date":"2026-01-23","weight":27.5,"reps":8,"sets":3},{"date":"2026-01-30","weight":25.0,"reps":8,"sets":3},{"date":"2026-02-06","weight":20.0,"reps":15,"sets":4},{"date":"2026-02-13","weight":20.0,"reps":17,"sets":4},{"date":"2026-02-20","weight":20.0,"reps":18,"sets":4},{"date":"2026-02-27","weight":20.0,"reps":14,"sets":3},{"date":"2026-03-06","weight":20.0,"reps":15,"sets":3},{"date":"2026-03-13","weight":20.0,"reps":12,"sets":3}]},"ベンチプレス":{"part":"Push","is_pair":false,"data":[{"date":"2026-01-14","weight":45.0,"reps":5,"sets":3},{"date":"2026-01-22","weight":47.5,"reps":5,"sets":3},{"date":"2026-01-28","weight":50.0,"reps":5,"sets":3},{"date":"2026-02-04","weight":52.5,"reps":5,"sets":3},{"date":"2026-02-11","weight":55.0,"reps":5,"sets":3},{"date":"2026-02-18","weight":55.0,"reps":5,"sets":3},{"date":"2026-02-26","weight":57.5,"reps":5,"sets":3},{"date":"2026-03-05","weight":57.5,"reps":5,"sets":3},{"date":"2026-03-12","weight":50.0,"reps":5,"sets":3},{"date":"2026-04-09","weight":60.0,"reps":5,"sets":3},{"date":"2026-04-16","weight":60.0,"reps":5,"sets":3},{"date":"2026-04-23","weight":60.0,"reps":5,"sets":3},{"date":"2026-04-30","weight":62.5,"reps":5,"sets":3},{"date":"2026-05-07","weight":62.5,"reps":5,"sets":3},{"date":"2026-05-14","weight":62.5,"reps":5,"sets":3},{"date":"2026-05-22","weight":62.5,"reps":5,"sets":3},{"date":"2026-05-28","weight":62.5,"reps":5,"sets":3},{"date":"2026-06-03","weight":65.0,"reps":5,"sets":3},{"date":"2026-06-10","weight":65.0,"reps":5,"sets":3},{"date":"2026-06-19","weight":67.5,"reps":5,"sets":3},{"date":"2026-06-25","weight":67.5,"reps":5,"sets":3}]},"懸垂":{"part":"Pull","is_pair":false,"is_chin":true,"data":[{"date":"2026-04-07","weight":21.88,"reps":8,"sets":3},{"date":"2026-04-14","weight":21.88,"reps":8,"sets":3},{"date":"2026-04-21","weight":21.88,"reps":8,"sets":3},{"date":"2026-04-29","weight":18.75,"reps":8,"sets":3},{"date":"2026-05-05","weight":15.63,"reps":8,"sets":3},{"date":"2026-05-12","weight":12.5,"reps":8,"sets":3},{"date":"2026-05-21","weight":9.38,"reps":8,"sets":3},{"date":"2026-05-27","weight":9.38,"reps":8,"sets":3},{"date":"2026-06-02","weight":9.38,"reps":12,"sets":3},{"date":"2026-06-09","weight":9.38,"reps":12,"sets":3}]},"ラットプルダウン":{"part":"Pull","is_pair":false,"data":[{"date":"2026-04-10","weight":50.0,"reps":10,"sets":3},{"date":"2026-04-17","weight":50.0,"reps":10,"sets":3},{"date":"2026-04-24","weight":50.0,"reps":10,"sets":3},{"date":"2026-05-01","weight":52.5,"reps":10,"sets":3},{"date":"2026-05-08","weight":52.5,"reps":10,"sets":3},{"date":"2026-05-15","weight":55.0,"reps":10,"sets":3},{"date":"2026-05-23","weight":60.0,"reps":10,"sets":3},{"date":"2026-05-29","weight":55.0,"reps":10,"sets":3},{"date":"2026-06-04","weight":57.5,"reps":10,"sets":3},{"date":"2026-06-11","weight":57.5,"reps":10,"sets":3},{"date":"2026-06-20","weight":57.5,"reps":10,"sets":3},{"date":"2026-06-26","weight":60.0,"reps":10,"sets":3}]},"インクラインダンベルプレス":{"part":"Push","is_pair":true,"data":[{"date":"2024-09-16","weight":12.0,"reps":15,"sets":3},{"date":"2024-09-27","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-11","weight":10.0,"reps":10,"sets":3},{"date":"2024-10-17","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-24","weight":10.0,"reps":12,"sets":3},{"date":"2024-10-30","weight":10.0,"reps":15,"sets":3},{"date":"2024-11-06","weight":10.0,"reps":15,"sets":3},{"date":"2024-11-15","weight":10.0,"reps":15,"sets":3},{"date":"2026-01-08","weight":15.0,"reps":12,"sets":4},{"date":"2026-01-14","weight":15.0,"reps":10,"sets":3},{"date":"2026-01-22","weight":15.0,"reps":9,"sets":3},{"date":"2026-01-28","weight":15.0,"reps":10,"sets":3},{"date":"2026-02-04","weight":15.0,"reps":12,"sets":3},{"date":"2026-02-11","weight":15.0,"reps":12,"sets":3},{"date":"2026-02-18","weight":17.5,"reps":10,"sets":3},{"date":"2026-02-26","weight":17.5,"reps":11,"sets":3},{"date":"2026-03-05","weight":17.5,"reps":10,"sets":3},{"date":"2026-04-30","weight":17.5,"reps":10,"sets":3},{"date":"2026-05-07","weight":20.0,"reps":10,"sets":3},{"date":"2026-05-14","weight":20.0,"reps":10,"sets":3},{"date":"2026-05-22","weight":20.0,"reps":10,"sets":3},{"date":"2026-05-28","weight":20.0,"reps":10,"sets":3},{"date":"2026-06-03","weight":20.0,"reps":10,"sets":3},{"date":"2026-06-10","weight":20.0,"reps":10,"sets":3},{"date":"2026-06-19","weight":20.0,"reps":10,"sets":3},{"date":"2026-06-25","weight":20.0,"reps":10,"sets":3}]},"シーテッドロウ":{"part":"Pull","is_pair":false,"data":[{"date":"2026-01-09","weight":35.0,"reps":10,"sets":5},{"date":"2026-01-16","weight":35.0,"reps":10,"sets":3},{"date":"2026-01-23","weight":35.0,"reps":10,"sets":3},{"date":"2026-01-30","weight":42.5,"reps":10,"sets":3},{"date":"2026-02-06","weight":42.5,"reps":10,"sets":3},{"date":"2026-02-13","weight":42.5,"reps":12,"sets":3},{"date":"2026-02-20","weight":50.0,"reps":10,"sets":3},{"date":"2026-02-27","weight":50.0,"reps":10,"sets":3},{"date":"2026-03-06","weight":50.0,"reps":10,"sets":3},{"date":"2026-03-13","weight":45.0,"reps":10,"sets":3},{"date":"2026-05-01","weight":55.0,"reps":10,"sets":3},{"date":"2026-05-08","weight":60.0,"reps":10,"sets":3},{"date":"2026-05-15","weight":60.0,"reps":10,"sets":3},{"date":"2026-05-23","weight":62.5,"reps":10,"sets":3},{"date":"2026-05-29","weight":62.5,"reps":10,"sets":3},{"date":"2026-06-04","weight":65.0,"reps":10,"sets":3},{"date":"2026-06-11","weight":65.0,"reps":10,"sets":3},{"date":"2026-06-20","weight":65.0,"reps":10,"sets":3},{"date":"2026-06-26","weight":65.0,"reps":10,"sets":3}]},"OHP":{"part":"Push","is_pair":false,"data":[{"date":"2026-01-14","weight":25.0,"reps":8,"sets":3},{"date":"2026-01-22","weight":25.0,"reps":7,"sets":3},{"date":"2026-01-28","weight":25.0,"reps":8,"sets":3},{"date":"2026-02-04","weight":25.0,"reps":9,"sets":3},{"date":"2026-02-11","weight":25.0,"reps":10,"sets":3},{"date":"2026-02-18","weight":25.0,"reps":11,"sets":3},{"date":"2026-02-26","weight":27.5,"reps":8,"sets":3},{"date":"2026-03-05","weight":27.5,"reps":8,"sets":3},{"date":"2026-03-12","weight":22.5,"reps":8,"sets":2},{"date":"2026-04-30","weight":30.0,"reps":8,"sets":3},{"date":"2026-05-07","weight":32.5,"reps":8,"sets":3},{"date":"2026-05-14","weight":32.5,"reps":8,"sets":3},{"date":"2026-05-22","weight":30.0,"reps":8,"sets":3},{"date":"2026-05-28","weight":32.5,"reps":8,"sets":3},{"date":"2026-06-03","weight":32.5,"reps":8,"sets":3},{"date":"2026-06-10","weight":35.0,"reps":8,"sets":3},{"date":"2026-06-19","weight":35.0,"reps":8,"sets":3},{"date":"2026-06-25","weight":35.0,"reps":8,"sets":3}]},"プレスダウン":{"part":"Push","is_pair":false,"data":[{"date":"2026-01-14","weight":21.0,"reps":12,"sets":3},{"date":"2026-01-22","weight":21.0,"reps":12,"sets":2},{"date":"2026-01-28","weight":21.0,"reps":12,"sets":2},{"date":"2026-02-04","weight":21.25,"reps":12,"sets":2},{"date":"2026-02-11","weight":21.25,"reps":12,"sets":3},{"date":"2026-02-18","weight":21.25,"reps":15,"sets":3},{"date":"2026-02-26","weight":23.0,"reps":12,"sets":3},{"date":"2026-03-05","weight":23.75,"reps":12,"sets":3},{"date":"2026-03-12","weight":21.25,"reps":15,"sets":2},{"date":"2026-04-30","weight":23.75,"reps":15,"sets":3},{"date":"2026-05-14","weight":25.0,"reps":15,"sets":3},{"date":"2026-05-22","weight":26.25,"reps":15,"sets":3},{"date":"2026-05-28","weight":26.25,"reps":15,"sets":3},{"date":"2026-06-05","weight":28.75,"reps":15,"sets":3},{"date":"2026-06-10","weight":28.75,"reps":15,"sets":3},{"date":"2026-06-19","weight":28.75,"reps":15,"sets":3},{"date":"2026-06-25","weight":28.75,"reps":15,"sets":3}]},"ハンマーカール":{"part":"Pull","is_pair":true,"data":[{"date":"2026-02-06","weight":15.0,"reps":10,"sets":2},{"date":"2026-02-13","weight":15.0,"reps":12,"sets":2},{"date":"2026-02-20","weight":15.0,"reps":13,"sets":2},{"date":"2026-02-27","weight":15.0,"reps":13,"sets":2},{"date":"2026-03-06","weight":15.0,"reps":13,"sets":2},{"date":"2026-05-01","weight":15.0,"reps":12,"sets":3},{"date":"2026-05-08","weight":17.5,"reps":12,"sets":3},{"date":"2026-05-15","weight":17.5,"reps":12,"sets":3},{"date":"2026-05-29","weight":17.5,"reps":12,"sets":3},{"date":"2026-06-04","weight":17.5,"reps":12,"sets":3},{"date":"2026-06-11","weight":17.5,"reps":12,"sets":3},{"date":"2026-06-20","weight":17.5,"reps":12,"sets":3},{"date":"2026-06-26","weight":17.5,"reps":12,"sets":3}]},"クローズグリップベンチ":{"part":"Push","is_pair":false,"data":[{"date":"2026-02-26","weight":45.0,"reps":6,"sets":3},{"date":"2026-03-05","weight":45.0,"reps":6,"sets":3},{"date":"2026-03-12","weight":40.0,"reps":6,"sets":3},{"date":"2026-04-30","weight":50.0,"reps":6,"sets":3},{"date":"2026-05-07","weight":50.0,"reps":6,"sets":3},{"date":"2026-05-14","weight":50.0,"reps":6,"sets":3},{"date":"2026-05-22","weight":50.0,"reps":6,"sets":3},{"date":"2026-05-28","weight":50.0,"reps":6,"sets":3},{"date":"2026-06-03","weight":52.5,"reps":6,"sets":3},{"date":"2026-06-10","weight":52.5,"reps":6,"sets":3},{"date":"2026-06-19","weight":52.5,"reps":6,"sets":3},{"date":"2026-06-25","weight":52.5,"reps":6,"sets":3}]},"レッグカール":{"part":"Legs","is_pair":false,"data":[{"date":"2026-04-27","weight":37.5,"reps":12,"sets":3},{"date":"2026-05-04","weight":40.0,"reps":12,"sets":3},{"date":"2026-05-11","weight":40.0,"reps":12,"sets":3},{"date":"2026-05-20","weight":40.0,"reps":12,"sets":3},{"date":"2026-05-25","weight":40.0,"reps":12,"sets":3},{"date":"2026-06-01","weight":42.5,"reps":12,"sets":3},{"date":"2026-06-08","weight":42.5,"reps":12,"sets":3},{"date":"2026-06-17","weight":42.5,"reps":12,"sets":3},{"date":"2026-06-22","weight":42.5,"reps":12,"sets":3},{"date":"2026-06-23","weight":42.5,"reps":12,"sets":3}]},"EZバーカール":{"part":"Pull","is_pair":false,"data":[{"date":"2026-05-01","weight":20.0,"reps":15,"sets":3},{"date":"2026-05-08","weight":20.0,"reps":15,"sets":3},{"date":"2026-05-15","weight":20.0,"reps":15,"sets":3},{"date":"2026-05-23","weight":22.5,"reps":15,"sets":1},{"date":"2026-05-29","weight":20.0,"reps":20,"sets":3},{"date":"2026-06-04","weight":20.0,"reps":20,"sets":3},{"date":"2026-06-11","weight":20.0,"reps":20,"sets":3},{"date":"2026-06-20","weight":20.0,"reps":20,"sets":3},{"date":"2026-06-26","weight":20.0,"reps":20,"sets":3}]},"その他":{"part":"Pull","is_pair":false,"data":[]}};
+
+const PART_COLOR = { Push: '#6c63ff', Pull: '#43e97b', Legs: '#f7971e' };
+
+// --- Helpers ---
+function getMaxRecord(data) {
+  return data.reduce((a, b) => b.weight > a.weight ? b : a);
+}
+function weightLabel(weight, is_pair) {
+  return is_pair ? `${weight}kg×2` : `${weight}kg`;
+}
+
+// --- Stats ---
+function buildStats() {
+  const squatD = DATA['スクワット'].data;
+  const benchD = DATA['ベンチプレス'].data;
+  const latD   = DATA['ラットプルダウン'].data;
+  const totalSessions = new Set(
+    Object.values(DATA).flatMap(e => e.data.map(d => d.date))
+  ).size;
+
+  const benchMax = getMaxRecord(benchD);
+  const squatMax = getMaxRecord(squatD);
+  const latMax   = getMaxRecord(latD);
+
+  const stats = [
+    { value: `${benchMax.weight}kg`, label: 'ベンチプレス 最大重量', delta: `${benchMax.reps}回 × ${benchMax.sets}セット ｜ +${(benchMax.weight - benchD[0].weight).toFixed(1)}kg`, up: true },
+    { value: `${squatMax.weight}kg`, label: 'スクワット 最大重量', delta: `${squatMax.reps}回 × ${squatMax.sets}セット ｜ +${(squatMax.weight - squatD[0].weight).toFixed(1)}kg`, up: true },
+    { value: `${latMax.weight}kg`, label: 'ラットプルダウン 最大重量', delta: `${latMax.reps}回 × ${latMax.sets}セット ｜ +${(latMax.weight - latD[0].weight).toFixed(1)}kg`, up: true },
+    { value: totalSessions, label: 'トレーニング日数', delta: 'Sep 2024 – Jun 2026', up: true },
+    { value: '22ヶ月', label: 'シンガポール在籍期間', delta: '継続的な記録', up: true },
+    { value: Object.keys(DATA).filter(k => k !== 'その他').length, label: '記録した種目数', delta: 'Push / Pull / Legs', up: true },
+  ];
+
+  const grid = document.getElementById('statsGrid');
+  stats.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'stat-card';
+    c.innerHTML = `<div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div><div class="stat-delta ${s.up ? 'delta-up' : 'delta-down'}">${s.delta}</div>`;
+    grid.appendChild(c);
+  });
+}
+
+// --- Single exercise chart ---
+function makeExChart(canvasId, exerciseName, metaId) {
+  const ex = DATA[exerciseName];
+  if (!ex) return;
+  const d = ex.data;
+  const maxRec = getMaxRecord(d);
+  const first = d[0].weight, last = d[d.length-1].weight;
+  const delta = last - first;
+  const wSuffix = ex.is_pair ? '×2' : '';
+  document.getElementById(metaId).textContent =
+    `${first}kg${wSuffix} → ${last}kg${wSuffix}（${delta >= 0 ? '+' : ''}${delta.toFixed(1)}kg）｜最大 ${maxRec.weight}kg${wSuffix} ${maxRec.reps}回 × ${maxRec.sets}セット`;
+
+  return new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: {
+      labels: d.map(r => r.date.slice(2).replace(/-/g, '/')),
+      datasets: [{
+        label: '重量 (kg)',
+        data: d.map(r => r.weight),
+        borderColor: PART_COLOR[ex.part],
+        backgroundColor: PART_COLOR[ex.part] + '20',
+        fill: true, tension: 0.3,
+        pointRadius: 4, pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const r = d[ctx.dataIndex];
+              return `${weightLabel(r.weight, ex.is_pair)} ｜ ${r.reps}回 × ${r.sets}セット`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#7b7f9e', maxTicksLimit: 6 }, grid: { color: '#2a2d45' } },
+        y: { ticks: { color: '#7b7f9e' }, grid: { color: '#2a2d45' } }
+      }
+    }
+  });
+}
+
+// --- 懸垂 special chart (assistance → bodyweight) ---
+function makeChinChart() {
+  const ex = DATA['懸垂'];
+  const d = ex.data;
+
+  const chartData = d.map(r => ({ date: r.date, y: -r.weight, reps: r.reps, sets: r.sets }));
+  chartData.push({ date: '2026-06-26', y: 0, reps: 6, sets: 3, label: '自重' });
+
+  document.getElementById('chinMeta').textContent =
+    '−21.88kg補助スタート → 自重懸垂 6回 × 3セット達成｜補助ゼロが目標';
+
+  new Chart(document.getElementById('chinChart'), {
+    type: 'line',
+    data: {
+      labels: chartData.map((r, i) => i === chartData.length - 1 ? '自重' : r.date.slice(2).replace(/-/g, '/')),
+      datasets: [{
+        label: '補助重量',
+        data: chartData.map(r => r.y),
+        borderColor: '#43e97b',
+        backgroundColor: 'rgba(67,233,123,0.15)',
+        fill: true, tension: 0.3,
+        pointRadius: chartData.map((_, i) => i === chartData.length - 1 ? 8 : 4),
+        pointBackgroundColor: chartData.map((_, i) => i === chartData.length - 1 ? '#f7971e' : '#43e97b'),
+        pointHoverRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pt = chartData[ctx.dataIndex];
+              if (pt.y === 0) return `自重懸垂 ${pt.reps}回 × ${pt.sets}セット`;
+              return `補助 −${Math.abs(pt.y).toFixed(2)}kg ｜ ${pt.reps}回 × ${pt.sets}セット`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#7b7f9e', maxTicksLimit: 6 }, grid: { color: '#2a2d45' } },
+        y: {
+          ticks: { color: '#7b7f9e', callback: v => v === 0 ? '自重' : `${v}kg` },
+          grid: { color: '#2a2d45' },
+          max: 2,
+        }
+      }
+    }
+  });
+}
+
+// --- Exercise grid ---
+let currentPart = 'all';
+function buildExGrid() {
+  const grid = document.getElementById('exGrid');
+  grid.innerHTML = '';
+  Object.entries(DATA)
+    .filter(([name, ex]) => currentPart === 'all' || ex.part === currentPart)
+    .filter(([name]) => name !== 'その他')
+    .filter(([name, ex]) => ex.data.length > 10)
+    .sort((a, b) => b[1].data.length - a[1].data.length)
+    .forEach(([name, ex]) => {
+      const d = ex.data;
+      const maxRec = getMaxRecord(d);
+      const delta = d[d.length-1].weight - d[0].weight;
+      const card = document.createElement('div');
+      card.className = 'ex-card';
+
+      let weightDisplay, deltaDisplay;
+      if (ex.is_chin) {
+        const firstW = d[0].weight, lastW = d[d.length-1].weight;
+        weightDisplay = `補助 −${firstW}kg → 自重`;
+        deltaDisplay = `<span class="delta-up">▲ 自重達成</span>`;
+      } else {
+        const wLabel = ex.is_pair ? `${maxRec.weight}kg×2` : `${maxRec.weight}kg`;
+        weightDisplay = `最大 ${wLabel}`;
+        deltaDisplay = `<span class="${delta >= 0 ? 'delta-up' : 'delta-down'}">${delta >= 0 ? '▲' : '▼'}${Math.abs(delta).toFixed(1)}kg</span>`;
+      }
+
+      card.innerHTML = `
+        <div class="ex-name">${name}</div>
+        <span class="badge badge-${ex.part.toLowerCase()}">${ex.part}</span>
+        <div class="ex-meta" style="margin-top:8px">
+          <span>${weightDisplay}</span>
+          <span>${maxRec.reps}回 × ${maxRec.sets}set</span>
+          ${deltaDisplay}
+        </div>
+      `;
+      card.onclick = () => openModal(name);
+      grid.appendChild(card);
+    });
+}
+
+// --- Tabs ---
+document.getElementById('partTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentPart = tab.dataset.part;
+  buildExGrid();
+});
+
+// --- Modal ---
+let modalChart = null;
+function openModal(name) {
+  const ex = DATA[name];
+  if (!ex) return;
+  const d = ex.data;
+  document.getElementById('modalTitle').textContent = name;
+
+  if (ex.is_chin) {
+    // Chin-up: show negated chart
+    document.getElementById('modalMeta').textContent =
+      `Pull ｜ 補助 −21.88kg → 自重懸垂 6回 × 3セット`;
+    if (modalChart) { modalChart.destroy(); modalChart = null; }
+    const chartData = d.map(r => ({ date: r.date, y: -r.weight, reps: r.reps, sets: r.sets }));
+    chartData.push({ date: '2026-06-26', y: 0, reps: 6, sets: 3 });
+    modalChart = new Chart(document.getElementById('modalChart'), {
+      type: 'line',
+      data: {
+        labels: chartData.map((r, i) => i === chartData.length - 1 ? '自重' : r.date),
+        datasets: [{
+          label: '補助重量',
+          data: chartData.map(r => r.y),
+          borderColor: '#43e97b',
+          backgroundColor: 'rgba(67,233,123,0.15)',
+          fill: true, tension: 0.3,
+          pointRadius: chartData.map((_, i) => i === chartData.length - 1 ? 8 : 5),
+          pointBackgroundColor: chartData.map((_, i) => i === chartData.length - 1 ? '#f7971e' : '#43e97b'),
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => {
+            const pt = chartData[ctx.dataIndex];
+            return pt.y === 0 ? `自重懸垂 ${pt.reps}回 × ${pt.sets}セット` : `補助 −${Math.abs(pt.y).toFixed(2)}kg ｜ ${pt.reps}回 × ${pt.sets}セット`;
+          }}}
+        },
+        scales: {
+          x: { ticks: { color: '#7b7f9e' }, grid: { color: '#2a2d45' } },
+          y: { ticks: { color: '#7b7f9e', callback: v => v === 0 ? '自重' : `${v}kg` }, grid: { color: '#2a2d45' }, max: 2 }
+        }
+      }
+    });
+  } else {
+    // Normal exercise
+    const first = d[0].weight, last = d[d.length-1].weight;
+    const delta = last - first;
+    const wSuffix = ex.is_pair ? '×2' : '';
+    document.getElementById('modalMeta').textContent =
+      `${ex.part} ｜ ${first}kg${wSuffix} → ${last}kg${wSuffix}（${delta >= 0 ? '+' : ''}${delta.toFixed(1)}kg）｜${d.length}セッション`;
+
+    if (modalChart) { modalChart.destroy(); modalChart = null; }
+    modalChart = new Chart(document.getElementById('modalChart'), {
+      type: 'line',
+      data: {
+        labels: d.map(r => r.date),
+        datasets: [{
+          label: '重量 (kg)',
+          data: d.map(r => r.weight),
+          borderColor: PART_COLOR[ex.part],
+          backgroundColor: PART_COLOR[ex.part] + '25',
+          fill: true, tension: 0.3,
+          pointRadius: 5, pointHoverRadius: 7,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const r = d[ctx.dataIndex];
+                return `${weightLabel(r.weight, ex.is_pair)} ｜ ${r.reps}回 × ${r.sets}セット`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#7b7f9e' }, grid: { color: '#2a2d45' } },
+          y: { ticks: { color: '#7b7f9e' }, grid: { color: '#2a2d45' }, title: { display: true, text: '重量 kg', color: '#7b7f9e' } }
+        }
+      }
+    });
+  }
+
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  if (modalChart) { modalChart.destroy(); modalChart = null; }
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+// --- Init ---
+buildStats();
+makeExChart('benchChart', 'ベンチプレス', 'benchMeta');
+makeExChart('squatChart', 'スクワット', 'squatMeta');
+makeExChart('latChart', 'ラットプルダウン', 'latMeta');
+makeChinChart();
+buildExGrid();
+</script>
+</body>
+</html>
