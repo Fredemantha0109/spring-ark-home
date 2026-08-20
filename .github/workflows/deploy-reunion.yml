@@ -1,0 +1,53 @@
+name: Build Reunion App
+
+# reunion-app/ のソースが変わったときだけビルドし、成果物を main の reunion/ に戻す。
+# GitHub Pages は main / root 配信なので、コミットした時点で公開される。
+# reunion/data/*.json はアプリが Contents API で直接更新する実データなので触らない。
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'reunion-app/**'
+      - '.github/workflows/deploy-reunion.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-reunion
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: reunion-app/package-lock.json
+
+      - name: Install
+        working-directory: reunion-app
+        run: npm ci
+
+      - name: Clean stale bundles
+        run: rm -rf reunion/assets
+
+      - name: Build
+        working-directory: reunion-app
+        run: npm run build
+
+      - name: Commit build output
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reunion/index.html reunion/assets
+          if git diff --cached --quiet; then
+            echo "no change in build output"
+            exit 0
+          fi
+          git commit -m "build: reunion app [skip ci]"
+          git push

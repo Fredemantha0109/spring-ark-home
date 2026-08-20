@@ -1,0 +1,153 @@
+:root {
+  --bg: #f5f2ec;
+  --surface: #fff;
+  --border: #e0dbd2;
+  --border-soft: #f0ede8;
+  --text: #1a1814;
+  --text-muted: #8a8478;
+  --text-dim: #b5afa6;
+  --accent: #c0392b;
+  --accent3: #2a7a4b;
+  --high: #c0392b;
+  --mid: #d4850a;
+  --low: #2c5f8a;
+  --sg: #2a7a4b;
+  --week-bg: #faf8f4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  padding: 0 0 80px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font-family: inherit; color: inherit; }
+
+/* ---------- HERO ---------- */
+.hero { background: var(--text); color: var(--bg); padding: 36px 24px 28px; }
+.hero-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(245,242,236,0.4); margin-bottom: 6px; }
+.hero-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.hero-sub { font-size: 12px; color: rgba(245,242,236,0.5); margin-bottom: 20px; }
+.hero-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.hstat { display: flex; flex-direction: column; gap: 2px; }
+.hstat-num { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500; line-height: 1; }
+.hstat-label { font-size: 10px; color: rgba(245,242,236,0.45); }
+.progress-wrap { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
+.progress-track { flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--bg); border-radius: 2px; transition: width 0.4s ease; }
+.progress-pct { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(245,242,236,0.4); min-width: 32px; text-align: right; }
+
+/* ---------- TABS ---------- */
+.tabs { display: flex; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto; position: sticky; top: 0; z-index: 10; }
+.tab { padding: 14px 14px; font-size: 12px; font-weight: 500; color: var(--text-dim); cursor: pointer; border: none; border-bottom: 2px solid transparent; white-space: nowrap; background: none; transition: color 0.15s, border-color 0.15s; }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+.view { padding: 20px 16px; max-width: 760px; margin: 0 auto; }
+
+/* ---------- 共通パーツ ---------- */
+.section-head { display: flex; align-items: baseline; gap: 10px; padding: 10px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.section-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.section-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.section-note { font-size: 11px; color: var(--text-dim); margin: 0 0 12px; line-height: 1.6; }
+
+.pri-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.pri-high { background: var(--high); }
+.pri-mid { background: var(--mid); }
+.pri-low { background: var(--low); }
+
+.cat-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; white-space: nowrap; }
+.cat-前職 { background: #fde8e6; color: #8b2219; }
+.cat-監査法人 { background: #e6edf6; color: #1e3d5c; }
+.cat-高校大学 { background: #e8f5ee; color: #1a4d2e; }
+.cat-前々職 { background: #fef3e2; color: #7a4a0a; }
+.cat-バイト { background: #f0e8f5; color: #4a1a6b; }
+.cat-その他 { background: #f0f0f0; color: #555; }
+.cat-シンガポール { background: #dff0e7; color: #14522f; }
+
+.mono { font-family: 'DM Mono', monospace; }
+.empty { padding: 28px 4px; text-align: center; font-size: 12px; color: var(--text-dim); }
+
+/* ---------- OVERDUE ---------- */
+.overdue-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+.overdue-card.never { border-left: 3px solid var(--accent); }
+.overdue-main { flex: 1; min-width: 0; }
+.overdue-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.overdue-name { font-size: 14px; font-weight: 500; }
+.overdue-meta { display: flex; gap: 12px; flex-wrap: wrap; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
+.overdue-meta .never-tag { color: var(--accent); font-weight: 500; }
+.count-badge { font-family: 'DM Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 10px; background: var(--border-soft); color: var(--text-muted); white-space: nowrap; }
+.count-badge.met { background: rgba(42,122,75,0.12); color: var(--accent3); }
+
+/* ---------- SCHEDULE ---------- */
+.sg-banner { background: linear-gradient(135deg, #e8f5ee, #d6edf8); border: 1px solid #b8dfc8; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+.sg-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--sg); text-transform: uppercase; margin-bottom: 10px; }
+.sg-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.sg-pill { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; background: rgba(42,122,75,0.1); border: 1px solid rgba(42,122,75,0.25); font-size: 13px; }
+.sg-pill.done { opacity: 0.5; text-decoration: line-through; }
+.sg-pill-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--sg); opacity: 0.8; }
+
+.week-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.week-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; background: var(--week-bg); border: none; border-bottom: 1px solid var(--border); width: 100%; text-align: left; }
+.week-num { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-dim); min-width: 60px; }
+.week-dates { font-size: 13px; font-weight: 500; flex: 1; }
+.week-dots { display: flex; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.dot.done { background: var(--accent3); }
+.week-chevron { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
+.week-card.open .week-chevron { transform: rotate(180deg); }
+.week-slots { padding: 10px 14px; display: flex; flex-direction: column; gap: 7px; }
+
+.slot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); }
+.slot.done { border-color: rgba(42,122,75,0.35); background: rgba(42,122,75,0.05); }
+.slot-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 62px; }
+.slot-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
+.slot-check { font-size: 11px; color: var(--accent3); }
+
+/* ---------- LIST ---------- */
+.list-section { margin-bottom: 24px; }
+.list-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-soft); cursor: pointer; background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: left; }
+.list-item:hover { opacity: 0.75; }
+.list-item.done .list-name { text-decoration: line-through; color: var(--text-dim); }
+.list-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
+.list-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); text-align: right; white-space: nowrap; }
+.list-check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; flex-shrink: 0; }
+.list-item.done .list-check { background: var(--accent3); border-color: var(--accent3); color: #fff; }
+
+/* ---------- INPUT ---------- */
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px; margin-bottom: 16px; }
+.form-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.form-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.field > label { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.field input, .field select, .field textarea {
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+  font-size: 14px; background: var(--bg); width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid rgba(192,57,43,0.25); outline-offset: 0; }
+.field-row { display: flex; gap: 10px; }
+.field-row > .field { flex: 1; }
+
+.btn { border: none; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 500; cursor: pointer; background: var(--text); color: var(--bg); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-sub { background: none; border: 1px solid var(--border); color: var(--text-muted); }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 16px; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); font-size: 12px; }
+.chip button { background: none; border: none; cursor: pointer; color: var(--accent); font-size: 13px; line-height: 1; }
+
+.suggest { border: 1px solid var(--border); border-radius: 8px; max-height: 190px; overflow-y: auto; background: var(--surface); }
+.suggest-item { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border-soft); }
+.suggest-item:last-child { border-bottom: none; }
+.suggest-item:hover { background: var(--week-bg); }
+
+.msg { font-size: 12px; padding: 9px 12px; border-radius: 8px; margin-top: 10px; line-height: 1.6; }
+.msg.ok { background: rgba(42,122,75,0.1); color: var(--accent3); }
+.msg.err { background: rgba(192,57,43,0.08); color: var(--accent); }
+.msg.warn { background: #fdf3e0; color: #7a4a0a; }
+
+.banner { max-width: 760px; margin: 12px auto -8px; padding: 10px 14px; border-radius: 8px; background: #fdf3e0; color: #7a4a0a; font-size: 11px; line-height: 1.6; }
