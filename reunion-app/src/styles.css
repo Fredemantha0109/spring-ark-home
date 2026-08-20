@@ -151,3 +151,29 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .msg.warn { background: #fdf3e0; color: #7a4a0a; }
 
 .banner { max-width: 760px; margin: 12px auto -8px; padding: 10px 14px; border-radius: 8px; background: #fdf3e0; color: #7a4a0a; font-size: 11px; line-height: 1.6; }
+
+/* ---------- OVERDUE: カード内ミニフォーム ---------- */
+.overdue-card { flex-wrap: wrap; }
+.quick-btn {
+  border: 1px solid var(--border); border-radius: 16px; background: var(--surface);
+  color: var(--text-muted); font-size: 11px; padding: 5px 12px; cursor: pointer;
+  white-space: nowrap; transition: color 0.15s, border-color 0.15s;
+}
+.quick-btn:hover { color: var(--accent); border-color: var(--accent); }
+.quick-btn[aria-expanded='true'] { color: var(--accent); border-color: var(--accent); }
+
+.quick-form {
+  flex-basis: 100%; margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.quick-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.quick-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 130px; }
+.quick-field > span { font-size: 10px; color: var(--text-muted); }
+.quick-field input {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  font-size: 13px; background: var(--bg); width: 100%;
+}
+.quick-field input:focus { outline: 2px solid rgba(192,57,43,0.25); }
+.quick-form .btn { padding: 8px 16px; font-size: 12px; }
+.quick-form .msg { flex-basis: 100%; }

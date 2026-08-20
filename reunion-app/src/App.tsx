@@ -95,7 +95,14 @@ export default function App() {
         </div>
       ) : (
         <>
-          {tab === 'overdue' && <OverdueTab people={people} stats={stats} />}
+          {tab === 'overdue' && (
+            <OverdueTab
+              people={people}
+              meetings={meetings}
+              stats={stats}
+              onMeetingsSaved={setMeetings}
+            />
+          )}
           {tab === 'schedule' && <ScheduleTab people={people} stats={stats} />}
           {tab === 'list' && (
             <ListTab people={people} stats={stats} onRecordMeeting={recordMeetingFor} />

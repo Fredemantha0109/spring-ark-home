@@ -3,6 +3,7 @@ import type { Category, Meeting, Person, Priority } from '../types'
 import { CATEGORIES, PRIORITIES } from '../types'
 import { getToken, hasToken, newId, saveJson, setToken } from '../api/github'
 import { PRIORITY_LABEL } from '../lib/derive'
+import { errorText, recordMeeting, todayIso } from '../lib/recordMeeting'
 
 interface Props {
   people: Person[]
@@ -15,12 +16,6 @@ interface Props {
 }
 
 type Msg = { kind: 'ok' | 'err'; text: string } | null
-
-function todayIso(): string {
-  const now = new Date()
-  const offset = now.getTimezoneOffset() * 60000
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10)
-}
 
 function TokenSettings() {
   const [value, setValue] = useState(getToken())
@@ -105,7 +100,7 @@ function AddPersonForm({ people, onPeopleSaved }: Pick<Props, 'people' | 'onPeop
       setNote('')
       setMsg({ kind: 'ok', text: `${trimmed} を追加しました。反映は数十秒後になることがあります。` })
     } catch (error) {
-      setMsg({ kind: 'err', text: error instanceof Error ? error.message : String(error) })
+      setMsg({ kind: 'err', text: errorText(error) })
     } finally {
       setBusy(false)
     }
@@ -191,17 +186,9 @@ function AddMeetingForm({
     if (selected.length === 0) return
     setBusy(true)
     setMsg(null)
-    const meeting: Meeting = {
-      id: newId(),
-      personIds: selected,
-      date,
-      ...(place.trim() ? { place: place.trim() } : {}),
-      ...(note.trim() ? { note: note.trim() } : {}),
-    }
-    const next = [...meetings, meeting].sort((a, b) => a.date.localeCompare(b.date))
     const names = selected.map((id) => byId.get(id)?.name ?? id).join('、')
     try {
-      await saveJson('meetings', next, `add meeting: ${date} ${names}`)
+      const next = await recordMeeting({ meetings, personIds: selected, date, place, note, names })
       onMeetingsSaved(next)
       onSelectedChange([])
       setPlace('')
@@ -209,7 +196,7 @@ function AddMeetingForm({
       setQuery('')
       setMsg({ kind: 'ok', text: `${date} / ${names} を記録しました。` })
     } catch (error) {
-      setMsg({ kind: 'err', text: error instanceof Error ? error.message : String(error) })
+      setMsg({ kind: 'err', text: errorText(error) })
     } finally {
       setBusy(false)
     }
