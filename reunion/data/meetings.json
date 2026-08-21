@@ -107,6 +107,14 @@
     "place": "東京"
   },
   {
+    "id": "9d78689d-c923-4bbb-a110-fde825dc84ae",
+    "personIds": [
+      "p051"
+    ],
+    "date": "2026-08-06",
+    "place": "池袋"
+  },
+  {
     "id": "f9c9b0df-fc8c-4817-b6cb-ec04b2c24caa",
     "personIds": [
       "p032"
