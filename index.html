@@ -525,9 +525,26 @@ const CONFIG = {
 //
 // lastUpdated は Notion API から last_edited_time を取れなかったときの
 // フォールバック値（手書き）。取得できた場合はそちらで上書きされる。
+//
+// dataDbIds には「中身が溜まるDB」を指定する。放置日数はここの行から測る。
+// 詳しくは resolveContentDate() のコメントを参照。
 const ATTENTION_ITEMS = [
-  { name: '日用品管理',     pageId: '390e165e5f8a81cfb713de99905506cb', lastUpdated: null },
-  { name: 'アート学習ログ', pageId: 'fdf35a419ff54f489b80366c80e7b20d', lastUpdated: null, type: 'database' },
+  {
+    name: '日用品管理',
+    pageId: '390e165e5f8a81cfb713de99905506cb',
+    dataDbIds: [
+      '1d0f449ff1ac46dda7ab2a8114ce9e31',   // 日用品
+      '5ffb71527cbf49099ecd48a3d1585038',   // 日用品 購入履歴
+    ],
+    lastUpdated: null,
+  },
+  {
+    name: 'アート学習ログ',
+    pageId: 'fdf35a419ff54f489b80366c80e7b20d',
+    type: 'database',
+    dataDbIds: ['fdf35a419ff54f489b80366c80e7b20d'],
+    lastUpdated: null,
+  },
 ];
 
 // 同時に表示する件数。1件だけにしているのは意図的で、
@@ -933,7 +950,7 @@ function renderAttention() {
     return `
       <div class="attention-card" style="--att-color:${color}">
         <div class="attention-name">${escHtml(it.name)}</div>
-        <div class="attention-sub">最終更新 ${escHtml(label)}${it.stale ? '（暫定）' : ''}${rest > 0 ? ` ・ 待機 ${rest}` : ''}</div>
+        <div class="attention-sub">最後の記録 ${escHtml(label)}${it.stale ? '（暫定）' : ''}${rest > 0 ? ` ・ 待機 ${rest}` : ''}</div>
         <div class="attention-days">
           <span class="attention-num">${it.days}</span>
           <span class="attention-unit">日 放置</span>
@@ -949,6 +966,50 @@ function renderAttention() {
 async function refreshAttentionFromNotion() {
   const targets = ATTENTION_ITEMS.filter(it => it.pageId);
   if (!targets.length) return;
+
+  // 「放置」を last_edited_time で測ってはいけない。
+  // あれは「メタ情報を含む最終更新」なので、接続の追加・プロパティ変更・
+  // 自動化・APIアクセスでも動く。実際 2026-08-21、このページ達を
+  // インテグレーションに接続しただけで全候補が「1日」にリセットされ、
+  // 測ろうとしていた放置の事実が消えた。
+  //
+  // 代わりに「最後に中身をいじった日」＝ DBの行の last_edited_time を使う。
+  // 行が1件も無ければ「作って以来ずっと空」なので DB の created_time から数える。
+  // 複数DBがあるときは最も新しい日＝最後に何かを記録した日を採る。
+  const resolveContentDate = async (dbIds) => {
+    const found = [];
+    for (const id of dbIds) {
+      try {
+        const q = await fetch(`${PROXY}/v1/databases/${id}/query`, {
+          method: 'POST',
+          headers: { 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }],
+            page_size: 1,
+          }),
+        });
+        if (!q.ok) continue;
+        const row = (await q.json()).results?.[0];
+        if (row) {
+          if (row.last_edited_time || row.created_time) {
+            found.push(row.last_edited_time || row.created_time);
+          }
+          continue;
+        }
+        // 0件 = 一度も記録していない
+        const meta = await fetch(`${PROXY}/v1/databases/${id}`, {
+          headers: { 'Notion-Version': '2022-06-28' },
+        });
+        if (!meta.ok) continue;
+        const created = (await meta.json()).created_time;
+        if (created) found.push(created);
+      } catch (e) {
+        console.warn('content date failed:', id, e);
+      }
+    }
+    if (!found.length) return null;
+    return found.sort()[found.length - 1];   // ISO文字列は辞書順＝時系列順
+  };
 
   const fetchOne = async (kind, id) => {
     const res = await fetch(`${PROXY}/v1/${kind}/${id}`, {
@@ -977,9 +1038,14 @@ async function refreshAttentionFromNotion() {
       const obj = r.body;
       if (obj.archived || obj.in_trash) { it.gone = true; return; }
       it.unreachable = false;
-      if (!obj.last_edited_time) return;
 
-      it.lastUpdated = obj.last_edited_time.slice(0, 10);
+      // 中身ベースを優先。取れなければ last_edited_time にフォールバックする
+      // （汚れやすいので、あくまで dataDbIds が無い候補向けの保険）
+      let date = it.dataDbIds?.length ? await resolveContentDate(it.dataDbIds) : null;
+      if (!date) date = obj.last_edited_time;
+      if (!date) return;
+
+      it.lastUpdated = date.slice(0, 10);
       it.lastUpdatedLabel = it.lastUpdated;
       it.stale = false;
     } catch (e) {
