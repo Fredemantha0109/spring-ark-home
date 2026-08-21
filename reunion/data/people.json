@@ -424,5 +424,12 @@
     "category": "高校大学",
     "priority": "mid",
     "note": "W杯とユーロで盛り上がる会"
+  },
+  {
+    "id": "ec60c607-531b-40c6-a3c4-a982edf387db",
+    "name": "河田さん",
+    "category": "その他",
+    "priority": "mid",
+    "note": "ジム仲間"
   }
 ]
