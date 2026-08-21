@@ -107,6 +107,15 @@
     "place": "東京"
   },
   {
+    "id": "f9c9b0df-fc8c-4817-b6cb-ec04b2c24caa",
+    "personIds": [
+      "p032"
+    ],
+    "date": "2026-08-13",
+    "place": "麻布十番",
+    "note": "吉田会"
+  },
+  {
     "id": "7597eeab-0775-4045-982a-70b7e9bba6d2",
     "personIds": [
       "p001"
