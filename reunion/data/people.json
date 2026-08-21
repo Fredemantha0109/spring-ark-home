@@ -417,5 +417,12 @@
     "name": "大輔ワイン会",
     "category": "高校大学",
     "priority": "high"
+  },
+  {
+    "id": "a94286a2-aca8-47a2-bb80-6a6f3ae43b9a",
+    "name": "HOTSサッカー",
+    "category": "高校大学",
+    "priority": "mid",
+    "note": "W杯とユーロで盛り上がる会"
   }
 ]
