@@ -116,6 +116,15 @@
     "note": "BSノブロック"
   },
   {
+    "id": "9dfab144-ca4b-4cf2-9e23-67915cdd6bf0",
+    "personIds": [
+      "cdaece8a-3bc9-425c-b6e2-16375928d6d8"
+    ],
+    "date": "2026-08-04",
+    "place": "神宮",
+    "note": "ビアガーデン"
+  },
+  {
     "id": "9d78689d-c923-4bbb-a110-fde825dc84ae",
     "personIds": [
       "p051"
