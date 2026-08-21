@@ -411,5 +411,11 @@
     "category": "シンガポール",
     "priority": "high",
     "scheduledDate": "2026-07-03"
+  },
+  {
+    "id": "cdaece8a-3bc9-425c-b6e2-16375928d6d8",
+    "name": "大輔ワイン会",
+    "category": "高校大学",
+    "priority": "high"
   }
 ]
