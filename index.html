@@ -222,6 +222,16 @@ body::before {
   opacity: 0.85;
 }
 
+.attention-card--pending { border-left-style: dashed; }
+
+.attention-pending-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+
 .attention-link {
   align-self: flex-start;
   margin-top: 10px;
@@ -516,7 +526,6 @@ const CONFIG = {
 // lastUpdated は Notion API から last_edited_time を取れなかったときの
 // フォールバック値（手書き）。取得できた場合はそちらで上書きされる。
 const ATTENTION_ITEMS = [
-  { name: '貯蓄残高',       pageId: 'fdef516babae49f4abe3ca6cb9c59515', lastUpdated: null },
   { name: '日用品管理',     pageId: '390e165e5f8a81cfb713de99905506cb', lastUpdated: null },
   { name: 'アート学習ログ', pageId: 'fdf35a419ff54f489b80366c80e7b20d', lastUpdated: null, type: 'database' },
 ];
@@ -889,7 +898,26 @@ function renderAttention() {
   if (!panel || !grid) return;
 
   const all = liveAttentionItems();
-  if (!all.length) { panel.style.display = 'none'; grid.innerHTML = ''; return; }
+
+  if (!all.length) {
+    // 候補が全部「片付いた」ならセクションごと消す。
+    // だが表示できないだけ（未設定・API到達不能）なら、黙って消さずに理由を出す。
+    // 設定ミスで機能が静かに止まるのが一番まずい。
+    const pending = ATTENTION_ITEMS.filter(it => !it.gone);
+    if (!pending.length) { panel.style.display = 'none'; grid.innerHTML = ''; return; }
+    panel.style.display = '';
+    grid.innerHTML = `
+      <div class="attention-card attention-card--pending" style="--att-color:var(--text-dim)">
+        <div class="attention-name">放置日数を取得できていません</div>
+        <div class="attention-sub">対象 ${pending.length}件：${escHtml(pending.map(p => p.name).join(' / '))}</div>
+        <div class="attention-pending-note">
+          Notionの各ページで ⋯ → 接続 → spring-ark-home を追加<br>
+          直らない場合は worker-notion の ALLOWED_ORIGINS を確認
+        </div>
+      </div>`;
+    return;
+  }
+
   panel.style.display = '';
 
   const shown = all.slice(0, ATTENTION_SHOW_COUNT);
@@ -938,11 +966,17 @@ async function refreshAttentionFromNotion() {
       // type の書き間違いで消えないよう、404ならもう一方も試す
       if (r.status === 404) r = await fetchOne(other, it.pageId);
 
-      if (r.status === 404) { it.gone = true; return; }
+      // 404 では候補から外さない。Notionは「削除済み」にも
+      // 「インテグレーションに未共有」にも同じ object_not_found を返すため、
+      // 区別がつかない。ここで外すと、共有設定を1つ忘れただけで
+      // ページが黙って消える＝放置に気づかせる仕組みが静かに止まる。
+      // 片付いた判定は archived / in_trash（200応答）だけで行う。
+      if (r.status === 404) { it.unreachable = true; return; }
       if (!r.body) return;                       // 一時的な失敗はフォールバックのまま
 
       const obj = r.body;
       if (obj.archived || obj.in_trash) { it.gone = true; return; }
+      it.unreachable = false;
       if (!obj.last_edited_time) return;
 
       it.lastUpdated = obj.last_edited_time.slice(0, 10);
