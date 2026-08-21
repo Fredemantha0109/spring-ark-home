@@ -490,10 +490,6 @@ body::before {
             <span class="link-icon">🍽</span>
             <span class="link-name">ご飯屋さんリスト</span>
           </a>
-          <a class="link-card project" href="reunion/" target="_blank">
-            <span class="link-icon">🤝</span>
-            <span class="link-name">再会スケジュール</span>
-          </a>
         </div>
       </div>
     </div>
@@ -509,17 +505,21 @@ const CONFIG = {
 };
 
 // ---- 気にかけたい ----
-// 放置日数はここの lastUpdated から毎回計算する（日数はハードコードしない）。
-// Phase 2 で Notion API の last_edited_time に差し替える予定。
+// 「本当はやりたいのに存在ごと忘れているページ」の候補リスト。
+// ここに並べたページのうち、放置日数が最も長い1件だけをHomeに出す。
+// 片付いたページをNotion側で削除/アーカイブすると自動で除外され、次の1件が出る。
+//
+// lastUpdated は Notion API から last_edited_time を取れなかったときの
+// フォールバック値（手書き）。取得できた場合はそちらで上書きされる。
 const ATTENTION_ITEMS = [
-  {
-    name: '光熱費推移',
-    lastUpdated: '2024-03-01',   // 暫定値（Notion上の最終更新は 2024-03）
-    lastUpdatedLabel: '2024-03',
-    provisional: true,
-    url: 'https://app.notion.com/p/0d97525c347d4ecbbe7521fde2714771',
-  },
+  { name: '貯蓄残高',       pageId: 'fdef516babae49f4abe3ca6cb9c59515', lastUpdated: null },
+  { name: '日用品管理',     pageId: '390e165e5f8a81cfb713de99905506cb', lastUpdated: null },
+  { name: 'アート学習ログ', pageId: 'fdf35a419ff54f489b80366c80e7b20d', lastUpdated: null, type: 'database' },
 ];
+
+// 同時に表示する件数。1件だけにしているのは意図的で、
+// 並べた瞬間に「リスト」になり、リストは無視されるため（過去のリンク集の失敗と同じ構造）。
+const ATTENTION_SHOW_COUNT = 1;
 
 // 放置日数のしきい値と色。max は「その色が使われる最大日数」
 const ATTENTION_LEVELS = [
@@ -867,28 +867,41 @@ function attentionColor(days) {
   return (ATTENTION_LEVELS.find(l => days <= l.max) || ATTENTION_LEVELS[ATTENTION_LEVELS.length - 1]).color;
 }
 
+function pageUrl(pageId) {
+  return `https://app.notion.com/p/${String(pageId).replace(/-/g, '')}`;
+}
+
+// 生きている候補を、放置日数の降順で返す
+function liveAttentionItems() {
+  return ATTENTION_ITEMS
+    .filter(it => !it.gone && it.lastUpdated)
+    .map(it => ({ ...it, days: daysSince(it.lastUpdated) }))
+    .sort((a, b) => b.days - a.days);
+}
+
 function renderAttention() {
   const panel = document.getElementById('attention-panel');
   const grid = document.getElementById('attention-grid');
   if (!panel || !grid) return;
 
-  const items = ATTENTION_ITEMS
-    .map(it => ({ ...it, days: daysSince(it.lastUpdated) }))
-    .sort((a, b) => b.days - a.days);
-
-  if (!items.length) { panel.style.display = 'none'; return; }
+  const all = liveAttentionItems();
+  if (!all.length) { panel.style.display = 'none'; grid.innerHTML = ''; return; }
   panel.style.display = '';
 
-  grid.innerHTML = items.map(it => {
+  const shown = all.slice(0, ATTENTION_SHOW_COUNT);
+  const rest = all.length - shown.length;
+
+  grid.innerHTML = shown.map(it => {
     const color = attentionColor(it.days);
     const label = it.lastUpdatedLabel || it.lastUpdated;
-    const link = it.url
-      ? `<a class="attention-link" href="${escHtml(it.url)}" target="_blank" rel="noopener">Notionで開く ↗</a>`
+    const url = it.url || (it.pageId ? pageUrl(it.pageId) : '');
+    const link = url
+      ? `<a class="attention-link" href="${escHtml(url)}" target="_blank" rel="noopener">Notionで開く ↗</a>`
       : '';
     return `
       <div class="attention-card" style="--att-color:${color}">
         <div class="attention-name">${escHtml(it.name)}</div>
-        <div class="attention-sub">最終更新 ${escHtml(label)}${it.provisional ? '（暫定）' : ''}</div>
+        <div class="attention-sub">最終更新 ${escHtml(label)}${it.stale ? '（暫定）' : ''}${rest > 0 ? ` ・ 待機 ${rest}` : ''}</div>
         <div class="attention-days">
           <span class="attention-num">${it.days}</span>
           <span class="attention-unit">日 放置</span>
@@ -898,8 +911,51 @@ function renderAttention() {
   }).join('');
 }
 
+// Notion API から last_edited_time を取得して放置日数を最新化する。
+// 取れなくても手書きの lastUpdated で動き続ける（ネットワークに依存させない）。
+// 削除・アーカイブされたページは候補から外れるので、自動で次の1件が繰り上がる。
+async function refreshAttentionFromNotion() {
+  const targets = ATTENTION_ITEMS.filter(it => it.pageId);
+  if (!targets.length) return;
+
+  const fetchOne = async (kind, id) => {
+    const res = await fetch(`${PROXY}/v1/${kind}/${id}`, {
+      headers: { 'Notion-Version': '2022-06-28' },
+    });
+    return { status: res.status, body: res.ok ? await res.json() : null };
+  };
+
+  await Promise.all(targets.map(async it => {
+    try {
+      const primary = it.type === 'database' ? 'databases' : 'pages';
+      const other   = primary === 'pages' ? 'databases' : 'pages';
+
+      let r = await fetchOne(primary, it.pageId);
+      // type の書き間違いで消えないよう、404ならもう一方も試す
+      if (r.status === 404) r = await fetchOne(other, it.pageId);
+
+      if (r.status === 404) { it.gone = true; return; }
+      if (!r.body) return;                       // 一時的な失敗はフォールバックのまま
+
+      const obj = r.body;
+      if (obj.archived || obj.in_trash) { it.gone = true; return; }
+      if (!obj.last_edited_time) return;
+
+      it.lastUpdated = obj.last_edited_time.slice(0, 10);
+      it.lastUpdatedLabel = it.lastUpdated;
+      it.stale = false;
+    } catch (e) {
+      console.warn('attention refresh failed:', it.name, e);   // フォールバックで続行
+    }
+  }));
+
+  renderAttention();
+}
+
 initDate();
-renderAttention();
+for (const it of ATTENTION_ITEMS) it.stale = true;   // API取得までは暫定値
+renderAttention();          // まず手書きの日付で即描画（ネットワークを待たせない）
+refreshAttentionFromNotion();
 loadTasks();
 </script>
 </body>
