@@ -530,20 +530,28 @@ const CONFIG = {
 // 詳しくは resolveContentDate() のコメントを参照。
 const ATTENTION_ITEMS = [
   {
-    name: '日用品管理',
-    pageId: '390e165e5f8a81cfb713de99905506cb',
+    name: '読書管理',
+    pageId: '16d6f088709d4f8fac63ad8b1308e023',
     dataDbIds: [
-      '1d0f449ff1ac46dda7ab2a8114ce9e31',   // 日用品
-      '5ffb71527cbf49099ecd48a3d1585038',   // 日用品 購入履歴
+      'ffa8b0f7d24843518dfbfdccd8a13834',   // DB_読書管理
     ],
-    lastUpdated: null,
+    lastUpdated: '2024-03-15',   // フォールバック（実測: 最終更新の本 = 2024-03-15）
   },
   {
-    name: 'アート学習ログ',
-    pageId: 'fdf35a419ff54f489b80366c80e7b20d',
-    type: 'database',
-    dataDbIds: ['fdf35a419ff54f489b80366c80e7b20d'],
-    lastUpdated: null,
+    name: 'レシピ管理',
+    pageId: 'fec8d13231154cae9cb4b5ae2cd9eac3',
+    dataDbIds: [
+      'e487c6ba925e4210914577dd89810e1b',   // レシピDB
+    ],
+    lastUpdated: '2024-02-10',   // フォールバック（実測: 全件がテンプレ導入日のまま未編集）
+  },
+  {
+    name: '定期コスト管理',
+    pageId: '14fb801590d94120b3665005e5ff480c',
+    dataDbIds: [
+      '1d2c0fdfccc942ee841dcc3f9819e650',   // 固定費管理_DB
+    ],
+    lastUpdated: '2024-02-10',   // フォールバック（推定。レシピ管理と同じテンプレ由来で未編集の可能性大）
   },
 ];
 
